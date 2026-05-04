@@ -1,0 +1,34 @@
+<section class="lp-public-page">
+    <header class="lp-public-header">
+        {{#coverimage}}<img src="{{coverimage}}" alt="{{name}}" class="lp-podcast-cover">{{/coverimage}}
+        <div>
+            <h1>{{name}}</h1>
+            {{#subtitle}}<p class="lp-podcast-subtitle">{{subtitle}}</p>{{/subtitle}}
+            {{#authorname}}<p class="lp-podcast-author">{{authorname}}</p>{{/authorname}}
+            <div class="lp-public-description">{{{description}}}</div>
+            {{#rssurl}}
+                <a class="btn btn-primary" href="{{rssurl}}">{{#str}}rssurl, mod_learnplugpodcasts{{/str}}</a>
+            {{/rssurl}}
+        </div>
+    </header>
+
+    {{#hasepisodes}}
+        <div class="lp-public-episodes">
+            {{#episodes}}
+                <article class="lp-public-episode">
+                    <h3><a href="{{episodeurl}}">{{title}}</a></h3>
+                    {{#subtitle}}<p>{{subtitle}}</p>{{/subtitle}}
+                    <p class="lp-episode-meta">{{publishtime}}</p>
+                    <div>{{{description}}}</div>
+                    <audio controls preload="metadata">
+                        <source src="{{audiourl}}">
+                    </audio>
+                </article>
+            {{/episodes}}
+        </div>
+    {{/hasepisodes}}
+
+    {{^hasepisodes}}
+        <div class="lp-empty">{{#str}}learnerlistempty, mod_learnplugpodcasts{{/str}}</div>
+    {{/hasepisodes}}
+</section>

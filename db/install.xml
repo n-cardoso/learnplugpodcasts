@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="mod/learnplugpodcasts/db" VERSION="2026050233" COMMENT="XMLDB file for mod_learnplugpodcasts"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
+  <TABLES>
+    <TABLE NAME="learnplugpodcasts" COMMENT="Podcast series instances">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="course" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="intro" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="subtitle" TYPE="char" LENGTH="255" NOTNULL="false"/>
+        <FIELD NAME="authorname" TYPE="char" LENGTH="255" NOTNULL="false"/>
+        <FIELD NAME="owneruserid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="languagecode" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="en"/>
+        <FIELD NAME="category" TYPE="char" LENGTH="100" NOTNULL="false"/>
+        <FIELD NAME="explicitflag" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="copyrightnotice" TYPE="char" LENGTH="255" NOTNULL="false"/>
+        <FIELD NAME="websiteurl" TYPE="char" LENGTH="255" NOTNULL="false"/>
+        <FIELD NAME="email" TYPE="char" LENGTH="255" NOTNULL="false"/>
+        <FIELD NAME="publicenabled" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="publicslug" TYPE="char" LENGTH="120" NOTNULL="false"/>
+        <FIELD NAME="rssenabled" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="notifynewepisodes" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="rsslastbuild" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="defaultsort" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="newest"/>
+        <FIELD NAME="episodesperpage" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="10"/>
+        <FIELD NAME="showsubscribe" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="showsearch" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="showdescriptions" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="showtranscripts" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="completionlistenmode" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="completionlistenpercent" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="completionepisodecount" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="grade" TYPE="number" LENGTH="10" DECIMALS="5" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="gradeenabled" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="course" TYPE="foreign" FIELDS="course" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="course_ix" UNIQUE="false" FIELDS="course"/>
+        <INDEX NAME="owneruserid_ix" UNIQUE="false" FIELDS="owneruserid"/>
+        <INDEX NAME="publicslug_ix" UNIQUE="false" FIELDS="publicslug"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="learnplugpodcasts_eps" COMMENT="Podcast episodes">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="podcastid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="title" TYPE="char" LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="subtitle" TYPE="char" LENGTH="255" NOTNULL="false"/>
+        <FIELD NAME="slug" TYPE="char" LENGTH="140" NOTNULL="true"/>
+        <FIELD NAME="description" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="descriptionformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="episodenumber" TYPE="int" LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="seasonnumber" TYPE="int" LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="publishtime" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="durationsecs" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="draftstatus" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="draft"/>
+        <FIELD NAME="explicitflag" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="audiofileitemid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="transcriptfileitemid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="transcripttext" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="transcriptformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="episodeimageitemid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="externalurl" TYPE="char" LENGTH="255" NOTNULL="false"/>
+        <FIELD NAME="guid" TYPE="char" LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="rssitemhash" TYPE="char" LENGTH="64" NOTNULL="false"/>
+        <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="podcast_fk" TYPE="foreign" FIELDS="podcastid" REFTABLE="learnplugpodcasts" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="podcastid_ix" UNIQUE="false" FIELDS="podcastid"/>
+        <INDEX NAME="podcastslug_ix" UNIQUE="true" FIELDS="podcastid, slug"/>
+        <INDEX NAME="draftstatus_ix" UNIQUE="false" FIELDS="draftstatus"/>
+        <INDEX NAME="publishtime_ix" UNIQUE="false" FIELDS="publishtime"/>
+        <INDEX NAME="sortorder_ix" UNIQUE="false" FIELDS="sortorder"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="learnplugpodcasts_prog" COMMENT="Learner listening progress">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="podcastid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="episodeid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="lastpositionsecs" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="listenedsecs" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="listenedpercent" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="true" DEFAULT="0.00"/>
+        <FIELD NAME="completed" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="lastplaystate" TYPE="char" LENGTH="20" NOTNULL="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="podcast_fk" TYPE="foreign" FIELDS="podcastid" REFTABLE="learnplugpodcasts" REFFIELDS="id"/>
+        <KEY NAME="episode_fk" TYPE="foreign" FIELDS="episodeid" REFTABLE="learnplugpodcasts_eps" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="episode_user_uix" UNIQUE="true" FIELDS="episodeid, userid"/>
+        <INDEX NAME="userid_ix" UNIQUE="false" FIELDS="userid"/>
+        <INDEX NAME="podcastid_ix" UNIQUE="false" FIELDS="podcastid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="learnplugpodcasts_log" COMMENT="Publish and feed action log">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="podcastid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="episodeid" TYPE="int" LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="actiontype" TYPE="char" LENGTH="50" NOTNULL="true"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="ok"/>
+        <FIELD NAME="message" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="podcast_fk" TYPE="foreign" FIELDS="podcastid" REFTABLE="learnplugpodcasts" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="podcastid_ix" UNIQUE="false" FIELDS="podcastid"/>
+        <INDEX NAME="episodeid_ix" UNIQUE="false" FIELDS="episodeid"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

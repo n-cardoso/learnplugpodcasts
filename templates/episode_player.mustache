@@ -1,0 +1,19 @@
+{{#audio}}
+<div class="lp-player-wrap">
+    <audio controls preload="metadata"
+           class="lp-audio"
+           data-episode-id="{{id}}"
+           data-last-position="{{lastpositionsecs}}">
+        <source src="{{audio}}" type="{{audiotype}}">
+    </audio>
+    <div class="lp-wave" data-region="lp-wave" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="lp-progress">
+        <span data-region="lp-progress-label">Listened: {{listenedpercent}}%</span>
+        {{#iscompleted}}
+            <span class="lp-completion-ok">{{#str}}completionstatus_complete, mod_learnplugpodcasts{{/str}}</span>
+        {{/iscompleted}}
+    </div>
+</div>
+{{/audio}}

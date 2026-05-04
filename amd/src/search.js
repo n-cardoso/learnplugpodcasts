@@ -1,0 +1,107 @@
+define([], function() {
+    const toNumber = (value) => {
+        const number = Number(value);
+        return Number.isFinite(number) ? number : 0;
+    };
+
+    const sortCards = (cards, sortmode) => {
+        const sorted = cards.slice();
+        sorted.sort((a, b) => {
+            const apublish = toNumber(a.dataset.publishtime);
+            const bpublish = toNumber(b.dataset.publishtime);
+            const aduration = toNumber(a.dataset.durationsecs);
+            const bduration = toNumber(b.dataset.durationsecs);
+            const atitle = String(a.dataset.title || '').toLowerCase();
+            const btitle = String(b.dataset.title || '').toLowerCase();
+
+            switch (sortmode) {
+                case 'oldest':
+                    return apublish - bpublish;
+                case 'titleaz':
+                    return atitle.localeCompare(btitle);
+                case 'titleza':
+                    return btitle.localeCompare(atitle);
+                case 'durationlong':
+                    return bduration - aduration;
+                case 'durationshort':
+                    return aduration - bduration;
+                case 'newest':
+                default:
+                    return bpublish - apublish;
+            }
+        });
+        return sorted;
+    };
+
+    const init = () => {
+        const input = document.querySelector('[data-region="lp-podcast-search"]');
+        const sortselect = document.querySelector('[data-region="lp-podcast-sort"]');
+        const statusfilter = document.querySelector('[data-region="lp-filter-status"]');
+        const transcriptfilter = document.querySelector('[data-region="lp-filter-transcript"]');
+        const mediafilter = document.querySelector('[data-region="lp-filter-media"]');
+        const seasonfilter = document.querySelector('[data-region="lp-filter-season"]');
+        const list = document.querySelector('[data-region="lp-episode-list"]');
+        const cards = Array.from(document.querySelectorAll('.lp-episode-card'));
+
+        if (!list || !cards.length) {
+            return;
+        }
+
+        const applyState = () => {
+            const query = String(input?.value || '').trim().toLowerCase();
+            const sortmode = String(sortselect?.value || 'newest');
+            const status = String(statusfilter?.value || 'all');
+            const transcript = String(transcriptfilter?.value || 'all');
+            const media = String(mediafilter?.value || 'all');
+            const season = String(seasonfilter?.value || '').trim();
+
+            const sorted = sortCards(cards, sortmode);
+            sorted.forEach((card) => list.appendChild(card));
+
+            cards.forEach((card) => {
+                const text = card.textContent.toLowerCase();
+                const cardstatus = String(card.dataset.status || '');
+                const hastranscript = String(card.dataset.hasTranscript || '0') === '1';
+                const hasaudio = String(card.dataset.hasAudio || '0') === '1';
+                const hasexternal = String(card.dataset.hasExternal || '0') === '1';
+                const cardseason = String(card.dataset.season || '0');
+
+                const matchquery = !query || text.includes(query);
+                const matchstatus = status === 'all' || cardstatus === status;
+                const matchtranscript = transcript === 'all' ||
+                    (transcript === 'with' && hastranscript) ||
+                    (transcript === 'without' && !hastranscript);
+                const matchmedia = media === 'all' ||
+                    (media === 'audio' && hasaudio) ||
+                    (media === 'external' && hasexternal);
+                const matchseason = season === '' || cardseason === season;
+                const visible = matchquery && matchstatus && matchtranscript && matchmedia && matchseason;
+
+                card.style.display = visible ? '' : 'none';
+            });
+        };
+
+        if (input) {
+            input.addEventListener('input', applyState);
+        }
+        if (sortselect) {
+            sortselect.addEventListener('change', applyState);
+        }
+        if (statusfilter) {
+            statusfilter.addEventListener('change', applyState);
+        }
+        if (transcriptfilter) {
+            transcriptfilter.addEventListener('change', applyState);
+        }
+        if (mediafilter) {
+            mediafilter.addEventListener('change', applyState);
+        }
+        if (seasonfilter) {
+            seasonfilter.addEventListener('input', applyState);
+        }
+
+        applyState();
+    };
+
+    return {init};
+});
