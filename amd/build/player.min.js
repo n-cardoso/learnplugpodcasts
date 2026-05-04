@@ -180,7 +180,7 @@ define([], function() {
             }
             // Remove trailing language-code suffixes before appending one canonical code.
             let withoutSuffix = base;
-            const suffixPattern = /\s*[\(\[]\s*[a-z]{2,3}(?:[-_][a-z0-9]{2,8})?\s*[\)\]]\s*$/iu;
+            const suffixPattern = /\s*[([]\s*[a-z]{2,3}(?:[-_][a-z0-9]{2,8})?\s*[)\]]\s*$/iu;
             while (suffixPattern.test(withoutSuffix)) {
                 withoutSuffix = withoutSuffix.replace(suffixPattern, '').trim();
             }
@@ -272,17 +272,19 @@ define([], function() {
                 })
                 .then((content) => {
                     if (token !== captionLoadToken) {
-                        return;
+                        return null;
                     }
                     captionCues = parseVtt(content);
                     updateCaption();
+                    return null;
                 })
                 .catch(() => {
                     if (token !== captionLoadToken) {
-                        return;
+                        return null;
                     }
                     captionCues = [];
                     updateCaption();
+                    return null;
                 });
         };
 
@@ -342,20 +344,12 @@ define([], function() {
             });
         };
 
-        const selectEpisode = (item) => {
-            const audioUrl = item.dataset.audio || '';
-            if (!audioUrl) {
-                return;
-            }
-
-            const source = audio.querySelector('source');
-            if (!source) {
-                return;
-            }
-
+        const setActivePlaylistItem = (item) => {
             root.querySelectorAll('.lp-playlist-item').forEach((node) => node.classList.remove('is-active'));
             item.classList.add('is-active');
+        };
 
+        const syncFeaturedText = (item) => {
             if (titleEl) {
                 titleEl.textContent = item.dataset.title || '';
             }
@@ -376,6 +370,9 @@ define([], function() {
                 const percent = Math.round(Number(item.dataset.listenedPercent || 0));
                 progressLabel.textContent = `Listened: ${percent}%`;
             }
+        };
+
+        const syncFeaturedTranscript = (item) => {
             if (transcriptContent) {
                 transcriptContent.innerHTML = item.dataset.transcriptText || '';
             }
@@ -388,12 +385,17 @@ define([], function() {
                 transcriptLink.href = fileurl;
                 transcriptLink.style.display = fileurl ? '' : 'none';
             }
+        };
+
+        const syncFeaturedExternal = (item) => {
             if (externalWrap && externalLink) {
                 const externalurl = item.dataset.externalUrl || '';
                 externalLink.href = externalurl;
                 externalWrap.hidden = !externalurl;
             }
+        };
 
+        const syncAudioSource = (item, source, audioUrl) => {
             audio.dataset.episodeId = item.dataset.episodeId || '';
             audio.dataset.lastPosition = item.dataset.lastPosition || '0';
             audio.dataset.captionUrl = item.dataset.captionUrl || '';
@@ -407,10 +409,111 @@ define([], function() {
             const tracks = normaliseTracks(parsedTracks, audio.dataset.captionUrl || '', audio.dataset.captionLang || '');
             updateCaptionSelector(tracks, audio.dataset.captionUrl || '');
             loadCaptionTrack(audio.dataset.captionUrl || '');
+        };
+
+        const selectEpisode = (item) => {
+            const audioUrl = item.dataset.audio || '';
+            const source = audio.querySelector('source');
+            if (!audioUrl || !source) {
+                return;
+            }
+
+            setActivePlaylistItem(item);
+            syncFeaturedText(item);
+            syncFeaturedTranscript(item);
+            syncFeaturedExternal(item);
+            syncAudioSource(item, source, audioUrl);
+
             audio.load();
             audio.play().catch(() => null);
             updatePlayButton(root, false);
             applyDiscovery();
+        };
+
+        const bindCoreAudioEvents = () => {
+            audio.addEventListener('play', () => updatePlayButton(root, false));
+            audio.addEventListener('pause', () => updatePlayButton(root, true));
+            audio.addEventListener('ended', () => updatePlayButton(root, true));
+            audio.addEventListener('timeupdate', () => {
+                syncTimeUi();
+                updateCaption();
+            });
+            audio.addEventListener('loadedmetadata', () => {
+                syncTimeUi();
+                updateCaption();
+            });
+            audio.addEventListener('seeked', updateCaption);
+            audio.addEventListener('ended', updateCaption);
+        };
+
+        const bindPlayerControls = () => {
+            if (seekbar) {
+                seekbar.addEventListener('input', () => {
+                    const duration = Number(audio.duration || 0);
+                    if (!duration) {
+                        return;
+                    }
+                    const percent = Number(seekbar.value || 0);
+                    audio.currentTime = Math.max(0, Math.min(duration, (percent / 100) * duration));
+                    updateCaption();
+                });
+            }
+
+            root.querySelector('[data-action="play-toggle"]')?.addEventListener('click', () => {
+                if (audio.paused) {
+                    audio.play().catch(() => null);
+                } else {
+                    audio.pause();
+                }
+            });
+
+            root.querySelector('[data-action="seek-back"]')?.addEventListener('click', () => {
+                audio.currentTime = Math.max(0, Number(audio.currentTime || 0) - 10);
+            });
+
+            root.querySelector('[data-action="seek-forward"]')?.addEventListener('click', () => {
+                const duration = Number(audio.duration || 0);
+                const target = Number(audio.currentTime || 0) + 10;
+                audio.currentTime = duration > 0 ? Math.min(duration, target) : target;
+            });
+
+            if (speedBtn) {
+                speedBtn.addEventListener('click', () => {
+                    const current = Number(audio.playbackRate || 1);
+                    const idx = SPEED_STEPS.findIndex((step) => step === current);
+                    const next = SPEED_STEPS[(idx + 1) % SPEED_STEPS.length];
+                    audio.playbackRate = next;
+                    speedBtn.textContent = `×${next}`;
+                });
+            }
+
+            if (captionSelect) {
+                captionSelect.addEventListener('change', () => {
+                    const selected = captionSelect.options[captionSelect.selectedIndex];
+                    const url = selected ? String(selected.value || '').trim() : '';
+                    const lang = selected ? String(selected.dataset.lang || '').trim() : '';
+                    audio.dataset.captionUrl = url;
+                    audio.dataset.captionLang = lang;
+                    loadCaptionTrack(url);
+                });
+            }
+        };
+
+        const bindPlaylistAndDiscovery = () => {
+            if (togglePlaylistBtn && playlist) {
+                togglePlaylistBtn.addEventListener('click', () => {
+                    const expanded = togglePlaylistBtn.getAttribute('aria-expanded') === 'true';
+                    togglePlaylistBtn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+                    playlist.hidden = expanded;
+                });
+            }
+
+            root.querySelectorAll('.lp-playlist-item[data-action="select-episode"]').forEach((item) => {
+                item.addEventListener('click', () => selectEpisode(item));
+            });
+
+            channelSearch?.addEventListener('input', applyDiscovery);
+            channelSort?.addEventListener('change', applyDiscovery);
         };
 
         wireRestore(audio);
@@ -434,86 +537,9 @@ define([], function() {
         );
         updateCaptionSelector(initialTracks, audio.dataset.captionUrl || '');
         loadCaptionTrack(audio.dataset.captionUrl || '');
-
-        audio.addEventListener('play', () => updatePlayButton(root, false));
-        audio.addEventListener('pause', () => updatePlayButton(root, true));
-        audio.addEventListener('ended', () => updatePlayButton(root, true));
-        audio.addEventListener('timeupdate', () => {
-            syncTimeUi();
-            updateCaption();
-        });
-        audio.addEventListener('loadedmetadata', () => {
-            syncTimeUi();
-            updateCaption();
-        });
-        audio.addEventListener('seeked', updateCaption);
-        audio.addEventListener('ended', updateCaption);
-
-        if (seekbar) {
-            seekbar.addEventListener('input', () => {
-                const duration = Number(audio.duration || 0);
-                if (!duration) {
-                    return;
-                }
-                const percent = Number(seekbar.value || 0);
-                audio.currentTime = Math.max(0, Math.min(duration, (percent / 100) * duration));
-                updateCaption();
-            });
-        }
-
-        root.querySelector('[data-action="play-toggle"]')?.addEventListener('click', () => {
-            if (audio.paused) {
-                audio.play().catch(() => null);
-            } else {
-                audio.pause();
-            }
-        });
-
-        root.querySelector('[data-action="seek-back"]')?.addEventListener('click', () => {
-            audio.currentTime = Math.max(0, Number(audio.currentTime || 0) - 10);
-        });
-
-        root.querySelector('[data-action="seek-forward"]')?.addEventListener('click', () => {
-            const duration = Number(audio.duration || 0);
-            const target = Number(audio.currentTime || 0) + 10;
-            audio.currentTime = duration > 0 ? Math.min(duration, target) : target;
-        });
-
-        if (speedBtn) {
-            speedBtn.addEventListener('click', () => {
-                const current = Number(audio.playbackRate || 1);
-                const idx = SPEED_STEPS.findIndex((step) => step === current);
-                const next = SPEED_STEPS[(idx + 1) % SPEED_STEPS.length];
-                audio.playbackRate = next;
-                speedBtn.textContent = `×${next}`;
-            });
-        }
-
-        if (captionSelect) {
-            captionSelect.addEventListener('change', () => {
-                const selected = captionSelect.options[captionSelect.selectedIndex];
-                const url = selected ? String(selected.value || '').trim() : '';
-                const lang = selected ? String(selected.dataset.lang || '').trim() : '';
-                audio.dataset.captionUrl = url;
-                audio.dataset.captionLang = lang;
-                loadCaptionTrack(url);
-            });
-        }
-
-        if (togglePlaylistBtn && playlist) {
-            togglePlaylistBtn.addEventListener('click', () => {
-                const expanded = togglePlaylistBtn.getAttribute('aria-expanded') === 'true';
-                togglePlaylistBtn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
-                playlist.hidden = expanded;
-            });
-        }
-
-        root.querySelectorAll('.lp-playlist-item[data-action="select-episode"]').forEach((item) => {
-            item.addEventListener('click', () => selectEpisode(item));
-        });
-
-        channelSearch?.addEventListener('input', applyDiscovery);
-        channelSort?.addEventListener('change', applyDiscovery);
+        bindCoreAudioEvents();
+        bindPlayerControls();
+        bindPlaylistAndDiscovery();
         applyDiscovery();
     };
 
