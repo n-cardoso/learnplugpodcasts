@@ -34,9 +34,8 @@ use core_privacy\local\request\writer;
  */
 class provider implements
     \core_privacy\local\metadata\provider,
-    \core_privacy\local\request\plugin\provider,
-    \core_privacy\local\request\core_userlist_provider {
-
+    \core_privacy\local\request\core_userlist_provider,
+    \core_privacy\local\request\plugin\provider {
     /**
      * Metadata declaration.
      *
@@ -261,7 +260,7 @@ class provider implements
             return;
         }
 
-        list($in, $params) = $DB->get_in_or_equal($userlist->get_userids(), SQL_PARAMS_NAMED, 'uid');
+        [$in, $params] = $DB->get_in_or_equal($userlist->get_userids(), SQL_PARAMS_NAMED, 'uid');
         $params['podcastid'] = $cm->instance;
         $DB->delete_records_select('learnplugpodcasts_prog', "podcastid = :podcastid AND userid {$in}", $params);
         $DB->execute(

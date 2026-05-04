@@ -36,7 +36,7 @@ function xmldb_learnplugpodcasts_upgrade($oldversion): bool {
 
     require_once(__DIR__ . '/../classes/local/util/mime.php');
 
-    $cleanuplegacyautomation = static function() use ($DB): void {
+    $cleanuplegacyautomation = static function () use ($DB): void {
         $now = time();
         $legacyprefix = 'open' . 'ai_';
         $legacytaskpattern = '%process_' . 'open' . 'ai' . '_job%';
@@ -135,8 +135,16 @@ function xmldb_learnplugpodcasts_upgrade($oldversion): bool {
     if ($oldversion < 2026050105) {
         $dbman = $DB->get_manager();
         $table = new xmldb_table('learnplugpodcasts');
-        $field = new xmldb_field('notifynewepisodes', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1',
-            'rssenabled');
+        $field = new xmldb_field(
+            'notifynewepisodes',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '1',
+            'rssenabled'
+        );
 
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
@@ -161,8 +169,16 @@ function xmldb_learnplugpodcasts_upgrade($oldversion): bool {
     if ($oldversion < 2026050233) {
         $dbman = $DB->get_manager();
         $table = new xmldb_table('learnplugpodcasts');
-        $field = new xmldb_field('grade', XMLDB_TYPE_NUMBER, '10, 5', null, XMLDB_NOTNULL, null, '0',
-            'completionepisodecount');
+        $field = new xmldb_field(
+            'grade',
+            XMLDB_TYPE_NUMBER,
+            '10, 5',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'completionepisodecount'
+        );
 
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);

@@ -36,14 +36,19 @@ class backup_learnplugpodcasts_activity_task extends backup_activity_task {
      * Defines backup steps.
      */
     protected function define_my_steps(): void {
-        $this->add_step(new backup_learnplugpodcasts_activity_structure_step('learnplugpodcasts_structure',
-            'learnplugpodcasts.xml'));
+        $this->add_step(
+            new backup_learnplugpodcasts_activity_structure_step(
+                'learnplugpodcasts_structure',
+                'learnplugpodcasts.xml'
+            )
+        );
     }
 
     /**
      * File annotations.
      *
-     * @return array
+     * @param string $content
+     * @return string
      */
     public static function encode_content_links($content): string {
         global $CFG;

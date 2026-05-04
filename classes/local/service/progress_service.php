@@ -197,8 +197,10 @@ class progress_service {
         }
 
         if ($mode === 3) {
-            $completed = (int)$DB->count_records('learnplugpodcasts_prog',
-                ['podcastid' => $podcastid, 'userid' => $userid, 'completed' => 1]);
+            $completed = (int)$DB->count_records(
+                'learnplugpodcasts_prog',
+                ['podcastid' => $podcastid, 'userid' => $userid, 'completed' => 1]
+            );
             $target = max(1, (int)$podcast->completionepisodecount);
             return min(100.0, round(($completed / $target) * 100.0, 2));
         }

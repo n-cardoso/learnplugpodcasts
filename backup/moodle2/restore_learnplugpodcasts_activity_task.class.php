@@ -36,8 +36,12 @@ class restore_learnplugpodcasts_activity_task extends restore_activity_task {
      * Defines restore steps.
      */
     protected function define_my_steps(): void {
-        $this->add_step(new restore_learnplugpodcasts_activity_structure_step('learnplugpodcasts_structure',
-            'learnplugpodcasts.xml'));
+        $this->add_step(
+            new restore_learnplugpodcasts_activity_structure_step(
+                'learnplugpodcasts_structure',
+                'learnplugpodcasts.xml'
+            )
+        );
     }
 
     /**

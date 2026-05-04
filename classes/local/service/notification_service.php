@@ -57,7 +57,12 @@ class notification_service {
      * @param \context_module $context
      * @param int $actoruserid
      */
-    public function notify_new_episode(\stdClass $podcast, \stdClass $episode, \context_module $context, int $actoruserid = 0): void {
+    public function notify_new_episode(
+        \stdClass $podcast,
+        \stdClass $episode,
+        \context_module $context,
+        int $actoruserid = 0
+    ): void {
         global $CFG, $DB;
 
         if (!$this->is_activity_enabled($podcast) || $this->already_notified((int)$podcast->id, (int)$episode->id)) {

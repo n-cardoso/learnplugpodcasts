@@ -1,98 +1,108 @@
+{{!
+@template mod_learnplugpodcasts/mobileapp/mobile_view_page
+Moodle App view page for LearnPlug Podcasts.
+Example context (json):
+{
+"cmid": 1,
+"courseid": 2,
+"podcastname": "Podcast name",
+"podcastintro": "<p>Intro</p>",
+"coverimage": "https://example.com/cover.jpg",
+"hasepisodes": true,
+"downloadfilesjson": "[]",
+"episodes": [{
+"id": 1,
+"title": "Episode 1",
+"subtitle": "Subtitle",
+"durationlabel": "12:18",
+"description": "Description",
+"audiourl": "https://example.com/audio.mp3",
+"audiodownloadjson": "{}",
+"imageurl": "https://example.com/image.jpg"
+}]
+}
+}}
 {{=<% %>=}}
 <div class="lp-mobile-view">
-    <core-course-module-description
-        description="<% podcastintro %>"
-        component="mod_learnplugpodcasts"
-        componentId="<% cmid %>">
-    </core-course-module-description>
-
-    <ion-card>
-        <ion-card-header>
-            <ion-card-title><% podcastname %></ion-card-title>
-        </ion-card-header>
-        <%#coverimage%>
-            <img src="<% coverimage %>" core-external-content component="mod_learnplugpodcasts" componentId="<% cmid %>">
-        <%/coverimage%>
-    </ion-card>
-
-    <%#hasepisodes%>
-        <ion-item lines="none">
-            <ion-label>
-                <p>{{ 'plugin.mod_learnplugpodcasts.offlinelisteninghint' | translate }}</p>
-                <p><strong>{{ 'plugin.mod_learnplugpodcasts.offlineavailable' | translate }}</strong></p>
-            </ion-label>
-            <ion-button
-                fill="outline"
-                core-course-download-module-main-file
-                moduleId="<% cmid %>"
-                courseId="<% courseid %>"
-                component="mod_learnplugpodcasts"
-                [files]='<%& downloadfilesjson %>'>
-                {{ 'plugin.mod_learnplugpodcasts.downloadallepisodes' | translate }}
-            </ion-button>
-        </ion-item>
-    <%/hasepisodes%>
-
-    <ion-list>
-        <ion-list-header>
-            <p class="item-heading">{{ 'plugin.mod_learnplugpodcasts.episodes' | translate }}</p>
-        </ion-list-header>
-    </ion-list>
-
-    <ion-accordion-group>
-        <%#episodes%>
-            <ion-accordion value="episode-<% id %>">
-                <ion-item slot="header" lines="full">
-                    <%#imageurl%>
-                        <ion-thumbnail slot="start">
-                            <img src="<% imageurl %>" core-external-content component="mod_learnplugpodcasts" componentId="<% cmid %>">
-                        </ion-thumbnail>
-                    <%/imageurl%>
-                    <ion-label>
-                        <h2><% title %></h2>
-                        <%#subtitle%><p><% subtitle %></p><%/subtitle%>
-                        <p><% durationlabel %></p>
-                    </ion-label>
-                </ion-item>
-
-                <div slot="content" style="padding: 0 0.9rem 0.9rem;">
-                    <%#imageurl%>
-                        <img src="<% imageurl %>"
-                             core-external-content
-                             component="mod_learnplugpodcasts"
-                             componentId="<% cmid %>"
-                             style="width: 100%; border-radius: 10px; margin: 0.7rem 0 0.65rem; object-fit: cover;">
-                    <%/imageurl%>
-
-                    <%#description%>
-                        <p style="margin: 0 0 0.6rem;"><% description %></p>
-                    <%/description%>
-
-                    <audio
-                        controls
-                        preload="metadata"
-                        style="display: block; width: 100%; margin-bottom: 0.65rem;"
-                        src="<% audiourl %>"
-                        core-external-content
-                        component="mod_learnplugpodcasts"
-                        componentId="<% cmid %>"></audio>
-
-                    <ion-button
-                        expand="block"
-                        fill="outline"
-                        [core-download-file]='<%& audiodownloadjson %>'
-                        component="mod_learnplugpodcasts"
-                        componentId="<% cmid %>">
-                        {{ 'plugin.mod_learnplugpodcasts.downloadthisepisode' | translate }}
-                    </ion-button>
-                </div>
-            </ion-accordion>
-        <%/episodes%>
-    </ion-accordion-group>
-
-    <%^hasepisodes%>
-        <ion-item lines="none">
-            <ion-label>{{ 'plugin.mod_learnplugpodcasts.learnerlistempty' | translate }}</ion-label>
-        </ion-item>
-    <%/hasepisodes%>
+<core-course-module-description
+description="<% podcastintro %>"
+component="mod_learnplugpodcasts"
+componentId="<% cmid %>">
+</core-course-module-description>
+<ion-card>
+<ion-card-header>
+<ion-card-title><% podcastname %></ion-card-title>
+</ion-card-header>
+<%#coverimage%>
+<img src="<% coverimage %>" alt="<% podcastname %>">
+<%/coverimage%>
+</ion-card>
+<%#hasepisodes%>
+<ion-item lines="none">
+<ion-label>
+<p>{{ 'plugin.mod_learnplugpodcasts.offlinelisteninghint' | translate }}</p>
+<p><strong>{{ 'plugin.mod_learnplugpodcasts.offlineavailable' | translate }}</strong></p>
+</ion-label>
+<ion-button
+fill="outline"
+core-course-download-module-main-file
+moduleId="<% cmid %>"
+courseId="<% courseid %>"
+component="mod_learnplugpodcasts"
+files="<%& downloadfilesjson %>">
+{{ 'plugin.mod_learnplugpodcasts.downloadallepisodes' | translate }}
+</ion-button>
+</ion-item>
+<%/hasepisodes%>
+<ion-list>
+<ion-list-header>
+<p class="item-heading">{{ 'plugin.mod_learnplugpodcasts.episodes' | translate }}</p>
+</ion-list-header>
+</ion-list>
+<ion-accordion-group>
+<%#episodes%>
+<ion-accordion value="episode-<% id %>">
+<ion-item slot="header" lines="full">
+<%#imageurl%>
+<ion-thumbnail slot="start">
+<img src="<% imageurl %>" alt="<% title %>">
+</ion-thumbnail>
+<%/imageurl%>
+<ion-label>
+<h2><% title %></h2>
+<%#subtitle%><p><% subtitle %></p><%/subtitle%>
+<p><% durationlabel %></p>
+</ion-label>
+</ion-item>
+<div slot="content" style="padding: 0 0.9rem 0.9rem;">
+<%#imageurl%>
+<img src="<% imageurl %>"
+alt="<% title %>"
+style="width: 100%; border-radius: 10px; margin: 0.7rem 0 0.65rem; object-fit: cover;">
+<%/imageurl%>
+<%#description%>
+<p style="margin: 0 0 0.6rem;"><% description %></p>
+<%/description%>
+<audio
+controls
+preload="metadata"
+style="display: block; width: 100%; margin-bottom: 0.65rem;"
+src="<% audiourl %>"></audio>
+<ion-button
+expand="block"
+fill="outline"
+core-download-file="<%& audiodownloadjson %>"
+component="mod_learnplugpodcasts"
+componentId="<% cmid %>">
+{{ 'plugin.mod_learnplugpodcasts.downloadthisepisode' | translate }}
+</ion-button>
+</div>
+</ion-accordion>
+<%/episodes%>
+</ion-accordion-group>
+<%^hasepisodes%>
+<ion-item lines="none">
+<ion-label>{{ 'plugin.mod_learnplugpodcasts.learnerlistempty' | translate }}</ion-label>
+</ion-item>
+<%/hasepisodes%>
 </div>

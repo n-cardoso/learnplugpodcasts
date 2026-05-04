@@ -307,16 +307,34 @@ class episode_service {
         ];
 
         $data->audiofile = file_get_submitted_draft_itemid('audiofile');
-        file_prepare_draft_area($data->audiofile, $context->id, 'mod_learnplugpodcasts', 'episodeaudio', $episode->id,
-            ['subdirs' => 0, 'maxfiles' => 1]);
+        file_prepare_draft_area(
+            $data->audiofile,
+            $context->id,
+            'mod_learnplugpodcasts',
+            'episodeaudio',
+            $episode->id,
+            ['subdirs' => 0, 'maxfiles' => 1]
+        );
 
         $data->episodeimage = file_get_submitted_draft_itemid('episodeimage');
-        file_prepare_draft_area($data->episodeimage, $context->id, 'mod_learnplugpodcasts', 'episodeimage', $episode->id,
-            ['subdirs' => 0, 'maxfiles' => 1, 'accepted_types' => ['image']]);
+        file_prepare_draft_area(
+            $data->episodeimage,
+            $context->id,
+            'mod_learnplugpodcasts',
+            'episodeimage',
+            $episode->id,
+            ['subdirs' => 0, 'maxfiles' => 1, 'accepted_types' => ['image']]
+        );
 
         $data->transcriptfile = file_get_submitted_draft_itemid('transcriptfile');
-        file_prepare_draft_area($data->transcriptfile, $context->id, 'mod_learnplugpodcasts', 'episodetranscript', $episode->id,
-            ['subdirs' => 0, 'maxfiles' => 1]);
+        file_prepare_draft_area(
+            $data->transcriptfile,
+            $context->id,
+            'mod_learnplugpodcasts',
+            'episodetranscript',
+            $episode->id,
+            ['subdirs' => 0, 'maxfiles' => 1]
+        );
 
         $data->episodecaption = file_get_submitted_draft_itemid('episodecaption');
         file_prepare_draft_area(
@@ -329,8 +347,14 @@ class episode_service {
         );
 
         $data->attachments = file_get_submitted_draft_itemid('attachments');
-        file_prepare_draft_area($data->attachments, $context->id, 'mod_learnplugpodcasts', 'episodeattachment', $episode->id,
-            ['subdirs' => 0, 'maxfiles' => 10]);
+        file_prepare_draft_area(
+            $data->attachments,
+            $context->id,
+            'mod_learnplugpodcasts',
+            'episodeattachment',
+            $episode->id,
+            ['subdirs' => 0, 'maxfiles' => 10]
+        );
 
         return $data;
     }
@@ -370,8 +394,14 @@ class episode_service {
      */
     private function save_episode_files(\context_module $context, int $episodeid, \stdClass $data): void {
         $audioopts = ['subdirs' => 0, 'maxfiles' => 1, 'accepted_types' => ['audio']];
-        file_save_draft_area_files((int)($data->audiofile ?? 0), $context->id, 'mod_learnplugpodcasts', 'episodeaudio', $episodeid,
-            $audioopts);
+        file_save_draft_area_files(
+            (int)($data->audiofile ?? 0),
+            $context->id,
+            'mod_learnplugpodcasts',
+            'episodeaudio',
+            $episodeid,
+            $audioopts
+        );
 
         $audiofile = $this->get_episode_audio_file($context, $episodeid);
         if ($audiofile && !mime::is_allowed_audio($audiofile->get_mimetype())) {
@@ -428,8 +458,14 @@ class episode_service {
             }
         }
 
-        file_save_draft_area_files((int)($data->attachments ?? 0), $context->id, 'mod_learnplugpodcasts', 'episodeattachment',
-            $episodeid, ['subdirs' => 0, 'maxfiles' => 10]);
+        file_save_draft_area_files(
+            (int)($data->attachments ?? 0),
+            $context->id,
+            'mod_learnplugpodcasts',
+            'episodeattachment',
+            $episodeid,
+            ['subdirs' => 0, 'maxfiles' => 10]
+        );
     }
 
     /**

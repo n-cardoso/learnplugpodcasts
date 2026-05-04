@@ -69,7 +69,7 @@ class caption_service {
             ];
         }
 
-        usort($tracks, static function(array $a, array $b): int {
+        usort($tracks, static function (array $a, array $b): int {
             if ($a['lang'] === $b['lang']) {
                 return strcmp($a['filename'], $b['filename']);
             }
@@ -182,6 +182,7 @@ class caption_service {
      * Human-readable label for a language tag.
      *
      * @param string $lang
+     * @param string $filename
      * @return string
      */
     private function language_label(string $lang, string $filename = ''): string {

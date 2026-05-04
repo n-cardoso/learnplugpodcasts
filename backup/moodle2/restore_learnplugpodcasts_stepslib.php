@@ -34,8 +34,10 @@ class restore_learnplugpodcasts_activity_structure_step extends restore_activity
         ];
 
         if ($this->get_setting_value('userinfo')) {
-            $paths[] = new restore_path_element('learnplugpodcasts_progress',
-                '/activity/learnplugpodcasts/progressrows/progress');
+            $paths[] = new restore_path_element(
+                'learnplugpodcasts_progress',
+                '/activity/learnplugpodcasts/progressrows/progress'
+            );
         }
 
         return $this->prepare_activity_structure($paths);

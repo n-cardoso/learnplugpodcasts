@@ -170,8 +170,10 @@ class episode_repository {
      */
     public function get_max_sort_order(int $podcastid): int {
         global $DB;
-        $max = $DB->get_field_sql('SELECT COALESCE(MAX(sortorder), 0) FROM {learnplugpodcasts_eps} WHERE podcastid = :podcastid',
-            ['podcastid' => $podcastid]);
+        $max = $DB->get_field_sql(
+            'SELECT COALESCE(MAX(sortorder), 0) FROM {learnplugpodcasts_eps} WHERE podcastid = :podcastid',
+            ['podcastid' => $podcastid]
+        );
         return (int)$max;
     }
 

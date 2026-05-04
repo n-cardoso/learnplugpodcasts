@@ -33,6 +33,49 @@ define([], function() {
         return sorted;
     };
 
+    const matchesTranscriptFilter = (filter, hastranscript) => {
+        if (filter === 'all') {
+            return true;
+        }
+        if (filter === 'with') {
+            return hastranscript;
+        }
+        if (filter === 'without') {
+            return !hastranscript;
+        }
+        return true;
+    };
+
+    const matchesMediaFilter = (filter, hasaudio, hasexternal) => {
+        if (filter === 'all') {
+            return true;
+        }
+        if (filter === 'audio') {
+            return hasaudio;
+        }
+        if (filter === 'external') {
+            return hasexternal;
+        }
+        return true;
+    };
+
+    const cardMatchesFilters = (card, filters) => {
+        const text = card.textContent.toLowerCase();
+        const cardstatus = String(card.dataset.status || '');
+        const hastranscript = String(card.dataset.hasTranscript || '0') === '1';
+        const hasaudio = String(card.dataset.hasAudio || '0') === '1';
+        const hasexternal = String(card.dataset.hasExternal || '0') === '1';
+        const cardseason = String(card.dataset.season || '0');
+
+        const matchquery = !filters.query || text.includes(filters.query);
+        const matchstatus = filters.status === 'all' || cardstatus === filters.status;
+        const matchtranscript = matchesTranscriptFilter(filters.transcript, hastranscript);
+        const matchmedia = matchesMediaFilter(filters.media, hasaudio, hasexternal);
+        const matchseason = filters.season === '' || cardseason === filters.season;
+
+        return matchquery && matchstatus && matchtranscript && matchmedia && matchseason;
+    };
+
     const init = () => {
         const input = document.querySelector('[data-region="lp-podcast-search"]');
         const sortselect = document.querySelector('[data-region="lp-podcast-sort"]');
@@ -48,36 +91,20 @@ define([], function() {
         }
 
         const applyState = () => {
-            const query = String(input?.value || '').trim().toLowerCase();
-            const sortmode = String(sortselect?.value || 'newest');
-            const status = String(statusfilter?.value || 'all');
-            const transcript = String(transcriptfilter?.value || 'all');
-            const media = String(mediafilter?.value || 'all');
-            const season = String(seasonfilter?.value || '').trim();
+            const filters = {
+                query: String(input?.value || '').trim().toLowerCase(),
+                sortmode: String(sortselect?.value || 'newest'),
+                status: String(statusfilter?.value || 'all'),
+                transcript: String(transcriptfilter?.value || 'all'),
+                media: String(mediafilter?.value || 'all'),
+                season: String(seasonfilter?.value || '').trim(),
+            };
 
-            const sorted = sortCards(cards, sortmode);
+            const sorted = sortCards(cards, filters.sortmode);
             sorted.forEach((card) => list.appendChild(card));
 
             cards.forEach((card) => {
-                const text = card.textContent.toLowerCase();
-                const cardstatus = String(card.dataset.status || '');
-                const hastranscript = String(card.dataset.hasTranscript || '0') === '1';
-                const hasaudio = String(card.dataset.hasAudio || '0') === '1';
-                const hasexternal = String(card.dataset.hasExternal || '0') === '1';
-                const cardseason = String(card.dataset.season || '0');
-
-                const matchquery = !query || text.includes(query);
-                const matchstatus = status === 'all' || cardstatus === status;
-                const matchtranscript = transcript === 'all' ||
-                    (transcript === 'with' && hastranscript) ||
-                    (transcript === 'without' && !hastranscript);
-                const matchmedia = media === 'all' ||
-                    (media === 'audio' && hasaudio) ||
-                    (media === 'external' && hasexternal);
-                const matchseason = season === '' || cardseason === season;
-                const visible = matchquery && matchstatus && matchtranscript && matchmedia && matchseason;
-
-                card.style.display = visible ? '' : 'none';
+                card.style.display = cardMatchesFilters(card, filters) ? '' : 'none';
             });
         };
 

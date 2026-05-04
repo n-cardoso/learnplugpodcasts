@@ -284,8 +284,14 @@ foreach ($episodes as $episode) {
         ];
     }
     $episode->attachments = [];
-    $attachmentfiles = $fs->get_area_files($context->id, 'mod_learnplugpodcasts', 'episodeattachment', $episode->id, 'filename',
-        false);
+    $attachmentfiles = $fs->get_area_files(
+        $context->id,
+        'mod_learnplugpodcasts',
+        'episodeattachment',
+        $episode->id,
+        'filename',
+        false
+    );
     foreach ($attachmentfiles as $attachment) {
         $attachmenturl = moodle_url::make_pluginfile_url(
             $context->id,

@@ -1,32 +1,47 @@
+{{!
+@template mod_learnplugpodcasts/public_episode
+Public single episode page.
+Example context (json):
+{
+"podcastname": "Podcast",
+"title": "Episode title",
+"subtitle": "Subtitle",
+"publishtime": "2026-05-04",
+"description": "<p>Description</p>",
+"audiourl": "https://example.com/audio.mp3",
+"imageurl": "https://example.com/image.jpg",
+"transcripttext": "",
+"transcriptfileurl": "",
+"hasattachments": false,
+"attachments": []
+}
+}}
 <section class="lp-public-episode-page">
-    <p class="lp-breadcrumb">{{podcastname}}</p>
-    <h1>{{title}}</h1>
-    {{#subtitle}}<p class="lp-podcast-subtitle">{{subtitle}}</p>{{/subtitle}}
-    <p class="lp-episode-meta">{{publishtime}}</p>
-    {{#imageurl}}<img src="{{imageurl}}" alt="{{title}}" class="lp-episode-image">{{/imageurl}}
-    <div class="lp-episode-description">{{{description}}}</div>
-    {{#audiourl}}
-        <audio controls preload="metadata">
-            <source src="{{audiourl}}">
-        </audio>
-    {{/audiourl}}
-
-    {{#transcripttext}}
-        <details class="lp-transcript" open>
-            <summary>{{#str}}transcripttext, mod_learnplugpodcasts{{/str}}</summary>
-            <div>{{{transcripttext}}}</div>
-        </details>
-    {{/transcripttext}}
-
-    {{#transcriptfileurl}}
-        <a class="btn btn-secondary" href="{{transcriptfileurl}}">{{#str}}downloadtranscript, mod_learnplugpodcasts{{/str}}</a>
-    {{/transcriptfileurl}}
-
-    {{#hasattachments}}
-        <div class="lp-attachments">
-            {{#attachments}}
-                <a class="btn btn-secondary" href="{{url}}">{{#str}}downloadattachment, mod_learnplugpodcasts{{/str}}: {{name}}</a>
-            {{/attachments}}
-        </div>
-    {{/hasattachments}}
+<p class="lp-breadcrumb">{{podcastname}}</p>
+    <h1>{{title}}{{^title}}Episode{{/title}}</h1>
+{{#subtitle}}<p class="lp-podcast-subtitle">{{subtitle}}</p>{{/subtitle}}
+<p class="lp-episode-meta">{{publishtime}}</p>
+{{#imageurl}}<img src="{{imageurl}}" alt="{{title}}" class="lp-episode-image">{{/imageurl}}
+<div class="lp-episode-description">{{{description}}}</div>
+{{#audiourl}}
+<audio controls preload="metadata">
+<source src="{{audiourl}}">
+</audio>
+{{/audiourl}}
+{{#transcripttext}}
+<details class="lp-transcript" open>
+<summary>{{#str}}transcripttext, mod_learnplugpodcasts{{/str}}</summary>
+<div>{{{transcripttext}}}</div>
+</details>
+{{/transcripttext}}
+{{#transcriptfileurl}}
+<a class="btn btn-secondary" href="{{transcriptfileurl}}">{{#str}}downloadtranscript, mod_learnplugpodcasts{{/str}}</a>
+{{/transcriptfileurl}}
+{{#hasattachments}}
+<div class="lp-attachments">
+{{#attachments}}
+<a class="btn btn-secondary" href="{{url}}">{{#str}}downloadattachment, mod_learnplugpodcasts{{/str}}: {{name}}</a>
+{{/attachments}}
+</div>
+{{/hasattachments}}
 </section>

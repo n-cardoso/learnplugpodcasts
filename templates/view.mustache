@@ -1,20 +1,31 @@
+{{!
+@template mod_learnplugpodcasts/view
+Main activity template.
+Example context (json):
+{
+"cmid": 1,
+"sesskey": "abc123",
+"canmanage": false,
+"canviewreports": false,
+"hasfeaturedepisode": true,
+"featuredepisode": {"title":"Episode title"}
+}
+}}
 <div class="lp-podcast" data-region="lp-podcast" data-cmid="{{cmid}}" data-sesskey="{{sesskey}}">
-    {{#canmanage}}
-        {{> mod_learnplugpodcasts/podcast_header }}
-        {{> mod_learnplugpodcasts/manage_episodes }}
-        {{> mod_learnplugpodcasts/episode_list }}
-    {{/canmanage}}
-
-    {{^canmanage}}
-        {{#hasfeaturedepisode}}
-            {{> mod_learnplugpodcasts/channel_player }}
-        {{/hasfeaturedepisode}}
-        {{^hasfeaturedepisode}}
-            <div class="lp-empty">{{#str}}learnerlistempty, mod_learnplugpodcasts{{/str}}</div>
-        {{/hasfeaturedepisode}}
-    {{/canmanage}}
-
-    {{#canviewreports}}
-        {{> mod_learnplugpodcasts/analytics }}
-    {{/canviewreports}}
+{{#canmanage}}
+{{> mod_learnplugpodcasts/podcast_header }}
+{{> mod_learnplugpodcasts/manage_episodes }}
+{{> mod_learnplugpodcasts/episode_list }}
+{{/canmanage}}
+{{^canmanage}}
+{{#hasfeaturedepisode}}
+{{> mod_learnplugpodcasts/channel_player }}
+{{/hasfeaturedepisode}}
+{{^hasfeaturedepisode}}
+<div class="lp-empty">{{#str}}learnerlistempty, mod_learnplugpodcasts{{/str}}</div>
+{{/hasfeaturedepisode}}
+{{/canmanage}}
+{{#canviewreports}}
+{{> mod_learnplugpodcasts/analytics }}
+{{/canviewreports}}
 </div>

@@ -1,69 +1,91 @@
+{{!
+@template mod_learnplugpodcasts/episode_card
+Episode card in learner/teacher list.
+Example context (json):
+{
+"id": 1,
+"title": "Episode title",
+"subtitle": "Episode subtitle",
+"publishtime": "2026-05-04 10:00",
+"duration": "12:18",
+"durationsecs": 738,
+"publishtimeunix": 1777888800,
+"status": "published",
+"statuslabel": "Published",
+"seasonnumber": 1,
+"hasaudio": true,
+"hastranscript": true,
+"hasexternalurl": false,
+"ismarkedpublished": true,
+"showdescriptions": true,
+"showtranscripts": true,
+"description": "<p>Description</p>",
+"audio": "https://example.com/audio.mp3",
+"audiotype": "audio/mpeg",
+"lastpositionsecs": 0,
+"listenedpercent": 0,
+"iscompleted": false
+}
+}}
 <article class="lp-episode-card{{#canmanage}} lp-episode-card--manage{{/canmanage}}"
-         data-episode-id="{{id}}"
-         data-publishtime="{{publishtimeunix}}"
-         data-title="{{title}}"
-         data-durationsecs="{{durationsecs}}"
-         data-status="{{status}}"
-         data-season="{{seasonnumber}}"
-         data-has-audio="{{#hasaudio}}1{{/hasaudio}}{{^hasaudio}}0{{/hasaudio}}"
-         data-has-transcript="{{#hastranscript}}1{{/hastranscript}}{{^hastranscript}}0{{/hastranscript}}"
-         data-has-external="{{#hasexternalurl}}1{{/hasexternalurl}}{{^hasexternalurl}}0{{/hasexternalurl}}"
-         {{#canmanage}}draggable="true"{{/canmanage}}>
-    <header class="lp-episode-card__header">
-        <div>
-            <h3>{{title}}</h3>
-            {{#subtitle}}<p class="lp-episode-subtitle">{{subtitle}}</p>{{/subtitle}}
-            <p class="lp-episode-meta">{{publishtime}} • {{duration}}</p>
-        </div>
-        {{#ismarkedpublished}}
-            <span class="lp-status lp-status--published">{{#str}}publishedlabel, mod_learnplugpodcasts{{/str}}</span>
-        {{/ismarkedpublished}}
-        {{^ismarkedpublished}}
-            <span class="lp-status lp-status--draft">{{statuslabel}}</span>
-        {{/ismarkedpublished}}
-    </header>
-
-    {{#image}}<img src="{{image}}" alt="{{title}}" class="lp-episode-image">{{/image}}
-
-    {{#showdescriptions}}
-        <div class="lp-episode-description">{{{description}}}</div>
-    {{/showdescriptions}}
-
-    {{#hasexternalurl}}
-        <p class="lp-external-link-row">
-            <a class="lp-external-link" href="{{externalurl}}" target="_blank" rel="noopener noreferrer">
-                {{#str}}externalepisodelink, mod_learnplugpodcasts{{/str}}
-            </a>
-        </p>
-    {{/hasexternalurl}}
-
-    {{> mod_learnplugpodcasts/episode_player }}
-
-    {{#showtranscripts}}
-        {{#transcripttext}}
-            <details class="lp-transcript">
-                <summary>{{#str}}transcripttext, mod_learnplugpodcasts{{/str}}</summary>
-                <div>{{{transcripttext}}}</div>
-            </details>
-        {{/transcripttext}}
-        {{#transcriptfileurl}}
-            <a class="lp-transcript-link" href="{{transcriptfileurl}}">{{#str}}downloadtranscript, mod_learnplugpodcasts{{/str}}</a>
-        {{/transcriptfileurl}}
-    {{/showtranscripts}}
-
-    {{#hasattachments}}
-        <div class="lp-attachments">
-            {{#attachments}}
-                <a class="lp-transcript-link" href="{{url}}">{{#str}}downloadattachment, mod_learnplugpodcasts{{/str}}: {{name}}</a>
-            {{/attachments}}
-        </div>
-    {{/hasattachments}}
-
-    {{#canmanage}}
-        <footer class="lp-episode-manage">
-            <a class="btn btn-secondary" href="{{manageediturl}}">{{#str}}editepisode, mod_learnplugpodcasts{{/str}}</a>
-            <a class="btn btn-secondary" href="{{managedeleteurl}}">{{#str}}deleteepisode, mod_learnplugpodcasts{{/str}}</a>
-            <a class="btn btn-primary" href="{{managetoggleurl}}">{{managetogglelabel}}</a>
-        </footer>
-    {{/canmanage}}
+data-episode-id="{{id}}"
+data-publishtime="{{publishtimeunix}}"
+data-title="{{title}}"
+data-durationsecs="{{durationsecs}}"
+data-status="{{status}}"
+data-season="{{seasonnumber}}"
+data-has-audio="{{#hasaudio}}1{{/hasaudio}}{{^hasaudio}}0{{/hasaudio}}"
+data-has-transcript="{{#hastranscript}}1{{/hastranscript}}{{^hastranscript}}0{{/hastranscript}}"
+data-has-external="{{#hasexternalurl}}1{{/hasexternalurl}}{{^hasexternalurl}}0{{/hasexternalurl}}"
+{{#canmanage}}draggable="true"{{/canmanage}}>
+<header class="lp-episode-card__header">
+<div>
+            <h3>{{title}}{{^title}}Episode{{/title}}</h3>
+{{#subtitle}}<p class="lp-episode-subtitle">{{subtitle}}</p>{{/subtitle}}
+<p class="lp-episode-meta">{{publishtime}} • {{duration}}</p>
+</div>
+{{#ismarkedpublished}}
+<span class="lp-status lp-status--published">{{#str}}publishedlabel, mod_learnplugpodcasts{{/str}}</span>
+{{/ismarkedpublished}}
+{{^ismarkedpublished}}
+<span class="lp-status lp-status--draft">{{statuslabel}}</span>
+{{/ismarkedpublished}}
+</header>
+{{#image}}<img src="{{image}}" alt="{{title}}" class="lp-episode-image">{{/image}}
+{{#showdescriptions}}
+<div class="lp-episode-description">{{{description}}}</div>
+{{/showdescriptions}}
+{{#hasexternalurl}}
+<p class="lp-external-link-row">
+<a class="lp-external-link" href="{{externalurl}}" target="_blank" rel="noopener noreferrer">
+{{#str}}externalepisodelink, mod_learnplugpodcasts{{/str}}
+</a>
+</p>
+{{/hasexternalurl}}
+{{> mod_learnplugpodcasts/episode_player }}
+{{#showtranscripts}}
+{{#transcripttext}}
+<details class="lp-transcript">
+<summary>{{#str}}transcripttext, mod_learnplugpodcasts{{/str}}</summary>
+<div>{{{transcripttext}}}</div>
+</details>
+{{/transcripttext}}
+{{#transcriptfileurl}}
+<a class="lp-transcript-link" href="{{transcriptfileurl}}">{{#str}}downloadtranscript, mod_learnplugpodcasts{{/str}}</a>
+{{/transcriptfileurl}}
+{{/showtranscripts}}
+{{#hasattachments}}
+<div class="lp-attachments">
+{{#attachments}}
+<a class="lp-transcript-link" href="{{url}}">{{#str}}downloadattachment, mod_learnplugpodcasts{{/str}}: {{name}}</a>
+{{/attachments}}
+</div>
+{{/hasattachments}}
+{{#canmanage}}
+<footer class="lp-episode-manage">
+<a class="btn btn-secondary" href="{{manageediturl}}">{{#str}}editepisode, mod_learnplugpodcasts{{/str}}</a>
+<a class="btn btn-secondary" href="{{managedeleteurl}}">{{#str}}deleteepisode, mod_learnplugpodcasts{{/str}}</a>
+<a class="btn btn-primary" href="{{managetoggleurl}}">{{managetogglelabel}}</a>
+</footer>
+{{/canmanage}}
 </article>

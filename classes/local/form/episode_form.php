@@ -53,8 +53,13 @@ class episode_form extends \moodleform {
         $mform->addElement('text', 'subtitle', get_string('episodesubtitle', 'learnplugpodcasts'), ['size' => 64]);
         $mform->setType('subtitle', PARAM_TEXT);
 
-        $mform->addElement('editor', 'description', get_string('description', 'learnplugpodcasts'), null,
-            ['maxfiles' => 0, 'maxbytes' => 0]);
+        $mform->addElement(
+            'editor',
+            'description',
+            get_string('description', 'learnplugpodcasts'),
+            null,
+            ['maxfiles' => 0, 'maxbytes' => 0]
+        );
         $mform->setType('description', PARAM_RAW);
 
         $mform->addElement('text', 'seasonnumber', get_string('seasonnumber', 'learnplugpodcasts'), ['size' => 6]);
@@ -79,17 +84,37 @@ class episode_form extends \moodleform {
 
         $mform->addElement('advcheckbox', 'explicitflag', get_string('explicitflag', 'learnplugpodcasts'));
 
-        $mform->addElement('filemanager', 'audiofile', get_string('audiofile', 'learnplugpodcasts'), null,
-            ['subdirs' => 0, 'maxfiles' => 1, 'accepted_types' => ['audio']]);
+        $mform->addElement(
+            'filemanager',
+            'audiofile',
+            get_string('audiofile', 'learnplugpodcasts'),
+            null,
+            ['subdirs' => 0, 'maxfiles' => 1, 'accepted_types' => ['audio']]
+        );
 
-        $mform->addElement('filemanager', 'episodeimage', get_string('episodeimage', 'learnplugpodcasts'), null,
-            ['subdirs' => 0, 'maxfiles' => 1, 'accepted_types' => ['image']]);
+        $mform->addElement(
+            'filemanager',
+            'episodeimage',
+            get_string('episodeimage', 'learnplugpodcasts'),
+            null,
+            ['subdirs' => 0, 'maxfiles' => 1, 'accepted_types' => ['image']]
+        );
 
         if (!empty(get_config('mod_learnplugpodcasts', 'allowtranscripts'))) {
-            $mform->addElement('filemanager', 'transcriptfile', get_string('transcriptfile', 'learnplugpodcasts'), null,
-                ['subdirs' => 0, 'maxfiles' => 1]);
-            $mform->addElement('editor', 'transcripttext', get_string('transcripttext', 'learnplugpodcasts'), null,
-                ['maxfiles' => 0, 'maxbytes' => 0]);
+            $mform->addElement(
+                'filemanager',
+                'transcriptfile',
+                get_string('transcriptfile', 'learnplugpodcasts'),
+                null,
+                ['subdirs' => 0, 'maxfiles' => 1]
+            );
+            $mform->addElement(
+                'editor',
+                'transcripttext',
+                get_string('transcripttext', 'learnplugpodcasts'),
+                null,
+                ['maxfiles' => 0, 'maxbytes' => 0]
+            );
             $mform->setType('transcripttext', PARAM_RAW);
             $mform->addElement(
                 'filemanager',
@@ -107,8 +132,13 @@ class episode_form extends \moodleform {
         }
 
         if (!empty(get_config('mod_learnplugpodcasts', 'allowepisodeattachments'))) {
-            $mform->addElement('filemanager', 'attachments', get_string('attachments', 'learnplugpodcasts'), null,
-                ['subdirs' => 0, 'maxfiles' => 10]);
+            $mform->addElement(
+                'filemanager',
+                'attachments',
+                get_string('attachments', 'learnplugpodcasts'),
+                null,
+                ['subdirs' => 0, 'maxfiles' => 10]
+            );
         }
 
         $mform->addElement('url', 'externalurl', get_string('externalurl', 'learnplugpodcasts'), ['size' => 64]);

@@ -233,8 +233,11 @@ function learnplugpodcasts_pluginfile($course, $cm, $context, $filearea, $args, 
 
     if ($canmanage || (isloggedin() && !isguestuser())) {
         require_login($course, false, $cm);
-        if (!$canmanage && !has_capability('mod/learnplugpodcasts:view', $context) &&
-                !has_capability('mod/learnplugpodcasts:downloadmedia', $context)) {
+        if (
+            !$canmanage
+            && !has_capability('mod/learnplugpodcasts:view', $context)
+            && !has_capability('mod/learnplugpodcasts:downloadmedia', $context)
+        ) {
             return false;
         }
     } else {

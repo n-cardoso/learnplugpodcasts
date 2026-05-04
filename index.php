@@ -58,8 +58,10 @@ foreach ($instances as $instance) {
     }
 
     $table->data[] = [
-        html_writer::link(new moodle_url('/mod/learnplugpodcasts/view.php', ['id' => $instance->coursemodule]),
-            format_string($instance->name)),
+        html_writer::link(
+            new moodle_url('/mod/learnplugpodcasts/view.php', ['id' => $instance->coursemodule]),
+            format_string($instance->name)
+        ),
         $episodes,
         $publicurl,
     ];

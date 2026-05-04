@@ -106,4 +106,3 @@ class transcript_service {
         return false;
     }
 }
-

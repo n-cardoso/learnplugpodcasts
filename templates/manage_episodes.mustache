@@ -1,7 +1,16 @@
+{{!
+@template mod_learnplugpodcasts/manage_episodes
+Teacher/manage episodes header block.
+Example context (json):
+{
+"manageaddurl": "https://example.com/mod/learnplugpodcasts/view.php?id=1&action=add",
+"managehelp": "Create episodes and publish."
+}
+}}
 <section class="lp-manage-episodes">
-    <div class="lp-manage-header">
-        <h2>{{#str}}managetitle, mod_learnplugpodcasts{{/str}}</h2>
-        <a class="btn btn-primary" href="{{manageaddurl}}">{{#str}}addepisode, mod_learnplugpodcasts{{/str}}</a>
-    </div>
-    <p class="lp-note">{{managehelp}}</p>
+<div class="lp-manage-header">
+<h2>{{#str}}managetitle, mod_learnplugpodcasts{{/str}}</h2>
+<a class="btn btn-primary" href="{{manageaddurl}}">{{#str}}addepisode, mod_learnplugpodcasts{{/str}}</a>
+</div>
+<p class="lp-note">{{managehelp}}</p>
 </section>

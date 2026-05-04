@@ -185,4 +185,3 @@ class analytics_service {
         return format_float(round($value, 1), 1) . '%';
     }
 }
-
