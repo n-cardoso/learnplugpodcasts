@@ -71,6 +71,7 @@ $string['cap:publish'] = 'Publish LearnPlug Podcasts episodes';
 $string['cap:view'] = 'View LearnPlug Podcasts activity';
 $string['cap:viewpublic'] = 'View public LearnPlug Podcasts pages';
 $string['cap:viewreports'] = 'View LearnPlug Podcasts reports';
+$string['learnplugpodcasts:addinstance'] = 'Add LearnPlug Podcasts activity';
 $string['captionfiles'] = 'Caption tracks (.vtt)';
 $string['captionfiles_help'] =
     'Automatic language detection is based on the caption filename. '
