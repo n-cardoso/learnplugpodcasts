@@ -47,6 +47,7 @@ jobs:
             ls -la plugin
             exit 1
           fi
+          echo "MOODLE_DIR=moodle" >> "$GITHUB_ENV"
 
       - name: Setup PHP 8.2
         uses: shivammathur/setup-php@v2
@@ -77,14 +78,17 @@ jobs:
 
       - name: Detect installed plugin path in Moodle tree
         run: |
-          MATCH="$(grep -R -l \"\\$plugin->component = 'mod_learnplugpodcasts'\" ci/moodle/mod/*/version.php | head -n1 || true)"
-          if [ -z "$MATCH" ]; then
-            echo "Installed plugin path not found in ci/moodle/mod." >&2
-            find ci/moodle/mod -maxdepth 2 -type f -name version.php | sort
+          if [ -d "${MOODLE_DIR}/mod/learnplugpodcasts" ]; then
+            echo "CI_PLUGIN_DIR=${MOODLE_DIR}/mod/learnplugpodcasts" >> "$GITHUB_ENV"
+            echo "Detected installed plugin path: ${MOODLE_DIR}/mod/learnplugpodcasts"
+          elif [ -d "${MOODLE_DIR}/mod/plugin" ]; then
+            echo "CI_PLUGIN_DIR=${MOODLE_DIR}/mod/plugin" >> "$GITHUB_ENV"
+            echo "Detected installed plugin path: ${MOODLE_DIR}/mod/plugin"
+          else
+            echo "Installed plugin path not found in ${MOODLE_DIR}/mod." >&2
+            find "${MOODLE_DIR}/mod" -maxdepth 2 -type f -name version.php | sort || true
             exit 1
           fi
-          echo "CI_PLUGIN_DIR=$(dirname "$MATCH")" >> "$GITHUB_ENV"
-          echo "Detected installed plugin path: $(dirname "$MATCH")"
 
       - name: PHP Lint
         if: ${{ !cancelled() }}
@@ -113,13 +117,13 @@ jobs:
 
       - name: Mustache Lint
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci mustache --moodle ./ci/moodle "./${CI_PLUGIN_DIR}"
+        run: moodle-plugin-ci mustache --moodle "./${MOODLE_DIR}" "./${CI_PLUGIN_DIR}"
 
       - name: Grunt
         id: grunt
         continue-on-error: true
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci grunt --moodle ./ci/moodle --max-lint-warnings 0 "./${CI_PLUGIN_DIR}"
+        run: moodle-plugin-ci grunt --moodle "./${MOODLE_DIR}" --max-lint-warnings 0 "./${CI_PLUGIN_DIR}"
 
       - name: Upload AMD build artifacts
         if: ${{ !cancelled() && steps.grunt.outcome == 'success' }}
