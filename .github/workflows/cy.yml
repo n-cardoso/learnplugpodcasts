@@ -32,18 +32,18 @@ jobs:
 
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           path: plugin
 
-      - name: Detect plugin directory
+      - name: Detect source plugin directory
         run: |
           if [ -f "plugin/mod/learnplugpodcasts/version.php" ]; then
             echo "PLUGIN_DIR=plugin/mod/learnplugpodcasts" >> "$GITHUB_ENV"
           elif [ -f "plugin/version.php" ]; then
             echo "PLUGIN_DIR=plugin" >> "$GITHUB_ENV"
           else
-            echo "Could not detect plugin directory (version.php not found)." >&2
+            echo "Could not detect source plugin directory." >&2
             ls -la plugin
             exit 1
           fi
@@ -77,16 +77,14 @@ jobs:
 
       - name: Detect installed plugin path in Moodle tree
         run: |
-          if [ -f "ci/moodle/mod/learnplugpodcasts/version.php" ]; then
-            echo "CI_PLUGIN_DIR=ci/moodle/mod/learnplugpodcasts" >> "$GITHUB_ENV"
-          elif [ -f "ci/moodle/mod/plugin/version.php" ]; then
-            echo "CI_PLUGIN_DIR=ci/moodle/mod/plugin" >> "$GITHUB_ENV"
-          else
+          MATCH="$(grep -R -l \"\\$plugin->component = 'mod_learnplugpodcasts'\" ci/moodle/mod/*/version.php | head -n1 || true)"
+          if [ -z "$MATCH" ]; then
             echo "Installed plugin path not found in ci/moodle/mod." >&2
-            ls -la ci/moodle/mod
             find ci/moodle/mod -maxdepth 2 -type f -name version.php | sort
             exit 1
           fi
+          echo "CI_PLUGIN_DIR=$(dirname "$MATCH")" >> "$GITHUB_ENV"
+          echo "Detected installed plugin path: $(dirname "$MATCH")"
 
       - name: PHP Lint
         if: ${{ !cancelled() }}
