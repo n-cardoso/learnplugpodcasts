@@ -68,7 +68,7 @@ class mobile {
         }, $episodes);
         $progressmap = [];
         if (!empty($episodeids) && isloggedin() && !isguestuser()) {
-            list($insql, $params) = $DB->get_in_or_equal($episodeids, SQL_PARAMS_NAMED);
+            [$insql, $params] = $DB->get_in_or_equal($episodeids, SQL_PARAMS_NAMED);
             $params['userid'] = (int)$USER->id;
             $sql = "SELECT episodeid, lastpositionsecs, listenedpercent
                       FROM {learnplugpodcasts_prog}
@@ -133,7 +133,7 @@ class mobile {
                     'timemodified' => (int)$imagefile->get_timemodified(),
                     'mimetype' => (string)$imagefile->get_mimetype(),
                 ];
-            } elseif ($coverimage !== '') {
+            } else if ($coverimage !== '') {
                 $imageurl = $coverimage;
             }
 
