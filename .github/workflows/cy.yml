@@ -9,7 +9,6 @@ env:
   COMPOSER_PROCESS_TIMEOUT: 0
   COMPOSER_NO_INTERACTION: 1
   COMPOSER_NO_AUDIT: 1
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   test:
@@ -33,9 +32,22 @@ jobs:
 
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: plugin
+
+      - name: Detect plugin directory
+        run: |
+          if [ -f "plugin/mod/learnplugpodcasts/version.php" ]; then
+            echo "PLUGIN_DIR=plugin/mod/learnplugpodcasts" >> "$GITHUB_ENV"
+          elif [ -f "plugin/version.php" ]; then
+            echo "PLUGIN_DIR=plugin" >> "$GITHUB_ENV"
+          else
+            echo "Could not detect plugin directory (version.php not found)." >&2
+            ls -la plugin
+            exit 1
+          fi
+          echo "CI_PLUGIN_DIR=ci/moodle/mod/learnplugpodcasts" >> "$GITHUB_ENV"
 
       - name: Setup PHP 8.2
         uses: shivammathur/setup-php@v2
@@ -54,7 +66,7 @@ jobs:
           echo "NVM_DIR=$HOME/.nvm" >> "$GITHUB_ENV"
 
       - name: Install moodle-plugin-ci
-        run: moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
+        run: moodle-plugin-ci install --plugin "./${PLUGIN_DIR}" --db-host=127.0.0.1
         env:
           DB: mysqli
           MOODLE_BRANCH: MOODLE_405_STABLE
@@ -99,16 +111,21 @@ jobs:
         if: ${{ !cancelled() }}
         run: moodle-plugin-ci grunt --max-lint-warnings 0
 
-      - name: Upload AMD build
+      - name: Upload AMD build artifacts
         if: ${{ always() }}
         uses: actions/upload-artifact@v5
         with:
           name: mod_learnplugpodcasts-amd-build
-          path: plugin/amd/build/
+          path: ${{ env.CI_PLUGIN_DIR }}/amd/build/
           if-no-files-found: error
+
+      - name: Sync rebuilt AMD files back to plugin checkout
+        if: ${{ always() }}
+        run: |
+          mkdir -p "${PLUGIN_DIR}/amd/build"
+          rsync -a "${CI_PLUGIN_DIR}/amd/build/" "${PLUGIN_DIR}/amd/build/"
 
       - name: Fail if AMD build files changed
         if: ${{ !cancelled() }}
         run: |
-          cd plugin
-          git diff --exit-code -- amd/build/
+          git -C "${PLUGIN_DIR}" diff --exit-code -- amd/build/
