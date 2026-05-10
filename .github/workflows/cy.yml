@@ -103,13 +103,13 @@ jobs:
 
       - name: Mustache Lint
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci mustache
+        run: moodle-plugin-ci mustache --moodle ./ci/moodle "./${CI_PLUGIN_DIR}"
 
       - name: Grunt
         id: grunt
         continue-on-error: true
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci grunt --max-lint-warnings 0
+        run: moodle-plugin-ci grunt --moodle ./ci/moodle --max-lint-warnings 0 "./${CI_PLUGIN_DIR}"
 
       - name: Upload AMD build artifacts
         if: ${{ !cancelled() && steps.grunt.outcome == 'success' }}
