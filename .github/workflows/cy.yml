@@ -9,7 +9,6 @@ env:
   COMPOSER_PROCESS_TIMEOUT: 0
   COMPOSER_NO_INTERACTION: 1
   COMPOSER_NO_AUDIT: 1
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   test:
@@ -54,7 +53,7 @@ jobs:
           echo "NVM_DIR=$HOME/.nvm" >> "$GITHUB_ENV"
 
       - name: Install moodle-plugin-ci
-        run: moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
+        run: moodle-plugin-ci install --plugin ./plugin/mod/learnplugpodcasts --db-host=127.0.0.1
         env:
           DB: mysqli
           MOODLE_BRANCH: MOODLE_405_STABLE
@@ -104,11 +103,11 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: mod_learnplugpodcasts-amd-build
-          path: plugin/amd/build/
+          path: plugin/mod/learnplugpodcasts/amd/build/
           if-no-files-found: error
 
       - name: Fail if AMD build files changed
         if: ${{ !cancelled() }}
         run: |
-          cd plugin
+          cd plugin/mod/learnplugpodcasts
           git diff --exit-code -- amd/build/
