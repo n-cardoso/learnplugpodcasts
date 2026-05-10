@@ -121,12 +121,11 @@ jobs:
 
       - name: Grunt
         id: grunt
-        continue-on-error: true
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci grunt --moodle "./${MOODLE_DIR}" --max-lint-warnings 0 "./${CI_PLUGIN_DIR}"
+        run: moodle-plugin-ci grunt --moodle "./${MOODLE_DIR}" --max-lint-warnings 0 "./${CI_PLUGIN_DIR}" || true
 
       - name: Upload AMD build artifacts
-        if: ${{ !cancelled() && steps.grunt.outcome == 'success' }}
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v5
         with:
           name: mod_learnplugpodcasts-amd-build
@@ -134,12 +133,12 @@ jobs:
           if-no-files-found: ignore
 
       - name: Sync rebuilt AMD files back to plugin checkout
-        if: ${{ !cancelled() && steps.grunt.outcome == 'success' }}
+        if: ${{ !cancelled() }}
         run: |
           mkdir -p "${PLUGIN_DIR}/amd/build"
           rsync -a "${CI_PLUGIN_DIR}/amd/build/" "${PLUGIN_DIR}/amd/build/"
 
       - name: Fail if AMD build files changed
-        if: ${{ !cancelled() && steps.grunt.outcome == 'success' }}
+        if: ${{ !cancelled() }}
         run: |
           git -C "${PLUGIN_DIR}" diff --exit-code -- amd/build/
