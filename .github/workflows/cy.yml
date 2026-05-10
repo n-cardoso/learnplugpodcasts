@@ -87,13 +87,12 @@ jobs:
         continue-on-error: true
         run: moodle-plugin-ci grunt --max-lint-warnings 0
 
-      - name: Upload AMD build artifacts
-        if: always()
-        uses: actions/upload-artifact@v5
-        with:
-          name: mod_videotracker-amd-build
-          path: plugin/amd/build/
-          if-no-files-found: error
+    - name: Upload AMD build
+  uses: actions/upload-artifact@v5
+  with:
+    name: mod_learnplugpodcasts-amd-build
+    path: plugin/amd/build/
+    if-no-files-found: error
 
       - name: Fail if AMD build files changed
         run: |
