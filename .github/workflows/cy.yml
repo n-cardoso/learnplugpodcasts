@@ -5,6 +5,12 @@ on:
   pull_request:
   workflow_dispatch:
 
+env:
+  COMPOSER_PROCESS_TIMEOUT: 0
+  COMPOSER_NO_INTERACTION: 1
+  COMPOSER_NO_AUDIT: 1
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   test:
     runs-on: ubuntu-22.04
@@ -12,7 +18,7 @@ jobs:
 
     services:
       mariadb:
-        image: mariadb:10
+        image: mariadb:10.11
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_CHARACTER_SET_SERVER: utf8mb4
@@ -27,14 +33,14 @@ jobs:
 
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           path: plugin
 
       - name: Setup PHP 8.2
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: "8.2"
           extensions: intl, mbstring, xml, curl, soap, zip, gd, mysqli, pgsql
           ini-values: max_input_vars=5000
           coverage: none
@@ -48,53 +54,56 @@ jobs:
           echo "NVM_DIR=$HOME/.nvm" >> "$GITHUB_ENV"
 
       - name: Install moodle-plugin-ci
-        run: |
-          cd ci
-          php bin/moodle-plugin-ci install \
-            --plugin ../plugin \
-            --db-host=127.0.0.1 \
-            --db-type=mariadb \
-            --db-user=root \
-            --db-pass=root \
-            --db-name=moodle
+        run: moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
         env:
+          DB: mariadb
           MOODLE_BRANCH: MOODLE_405_STABLE
 
       - name: PHP Lint
+        if: ${{ !cancelled() }}
         run: moodle-plugin-ci phplint
 
       - name: PHP Mess Detector
         continue-on-error: true
+        if: ${{ !cancelled() }}
         run: moodle-plugin-ci phpmd
 
       - name: Moodle Code Checker
+        if: ${{ !cancelled() }}
         run: moodle-plugin-ci phpcs --max-warnings 0
 
       - name: Moodle PHPDoc Checker
+        if: ${{ !cancelled() }}
         run: moodle-plugin-ci phpdoc --max-warnings 0
 
       - name: Validate plugin metadata
+        if: ${{ !cancelled() }}
         run: moodle-plugin-ci validate
 
       - name: Check upgrade savepoints
+        if: ${{ !cancelled() }}
         run: moodle-plugin-ci savepoints
 
       - name: Mustache Lint
+        if: ${{ !cancelled() }}
         run: moodle-plugin-ci mustache
 
       - name: Grunt
         id: grunt
         continue-on-error: true
+        if: ${{ !cancelled() }}
         run: moodle-plugin-ci grunt --max-lint-warnings 0
 
-    - name: Upload AMD build
-  uses: actions/upload-artifact@v5
-  with:
-    name: mod_learnplugpodcasts-amd-build
-    path: plugin/amd/build/
-    if-no-files-found: error
+      - name: Upload AMD build
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: mod_learnplugpodcasts-amd-build
+          path: plugin/amd/build/
+          if-no-files-found: error
 
       - name: Fail if AMD build files changed
+        if: ${{ !cancelled() }}
         run: |
           cd plugin
           git diff --exit-code -- amd/build/
