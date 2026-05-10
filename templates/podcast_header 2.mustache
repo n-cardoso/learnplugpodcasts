@@ -1,0 +1,43 @@
+{{!
+@template mod_learnplugpodcasts/podcast_header
+Podcast header for manager/teacher view.
+Example context (json):
+{
+"name": "Podcast name",
+"subtitle": "Subtitle",
+"authorname": "Teacher",
+"intro": "<p>Podcast description</p>",
+"coverimage": "https://example.com/cover.jpg",
+"showsubscribe": true,
+"publicurl": "https://example.com/public",
+"rssurl": "https://example.com/rss"
+}
+}}
+<section class="lp-podcast-header">
+<div class="lp-podcast-header__media">
+{{#coverimage}}<img src="{{coverimage}}" alt="{{name}}" class="lp-podcast-cover">{{/coverimage}}
+</div>
+<div class="lp-podcast-header__content">
+        <h1>{{name}}{{^name}}Podcast{{/name}}</h1>
+{{#subtitle}}<p class="lp-podcast-subtitle">{{subtitle}}</p>{{/subtitle}}
+{{#authorname}}<p class="lp-podcast-author">{{authorname}}</p>{{/authorname}}
+<div class="lp-podcast-intro">{{{intro}}}</div>
+{{#showsubscribe}}
+<div class="lp-podcast-links">
+{{#publicurl}}
+<div class="lp-link-row">
+<label>{{#str}}publicurl, mod_learnplugpodcasts{{/str}}</label>
+<input type="text" readonly value="{{publicurl}}" class="lp-copy-input">
+</div>
+{{/publicurl}}
+{{#rssurl}}
+<div class="lp-link-row">
+<label>{{#str}}rssurl, mod_learnplugpodcasts{{/str}}</label>
+<input type="text" readonly value="{{rssurl}}" class="lp-copy-input">
+<p class="lp-note">{{#str}}rssdistributionnote, mod_learnplugpodcasts{{/str}}</p>
+</div>
+{{/rssurl}}
+</div>
+{{/showsubscribe}}
+</div>
+</section>

@@ -1,0 +1,80 @@
+{{!
+@template mod_learnplugpodcasts/episode_list
+Episode list with sort/filter controls.
+Example context (json):
+{
+"showsearch": true,
+"searchplaceholder": "Search episodes",
+"sortnewest": true,
+"sortoldest": false,
+"canmanage": false,
+"hasepisodes": true,
+"episodes": [{"id":1,"title":"Episode title"}]
+}
+}}
+<div class="lp-episodes">
+    <h2 class="sr-only">Episodes</h2>
+    <div class="lp-episodes-controls">
+{{#showsearch}}
+<input type="search" class="lp-search" data-region="lp-podcast-search" placeholder="{{searchplaceholder}}">
+{{/showsearch}}
+<label class="lp-sort">
+{{#str}}sortlabel, mod_learnplugpodcasts{{/str}}
+<select data-region="lp-podcast-sort">
+<option value="newest" {{#sortnewest}}selected{{/sortnewest}}>
+{{#str}}sort_newest, mod_learnplugpodcasts{{/str}}
+</option>
+<option value="oldest" {{#sortoldest}}selected{{/sortoldest}}>
+{{#str}}sort_oldest, mod_learnplugpodcasts{{/str}}
+</option>
+<option value="titleaz">{{#str}}sort_titleaz, mod_learnplugpodcasts{{/str}}</option>
+<option value="titleza">{{#str}}sort_titleza, mod_learnplugpodcasts{{/str}}</option>
+<option value="durationlong">{{#str}}sort_durationlong, mod_learnplugpodcasts{{/str}}</option>
+<option value="durationshort">{{#str}}sort_durationshort, mod_learnplugpodcasts{{/str}}</option>
+</select>
+</label>
+{{#canmanage}}
+<label class="lp-sort">
+{{#str}}filterstatus, mod_learnplugpodcasts{{/str}}
+<select data-region="lp-filter-status">
+<option value="all">{{#str}}filterall, mod_learnplugpodcasts{{/str}}</option>
+<option value="published">{{#str}}status_published, mod_learnplugpodcasts{{/str}}</option>
+<option value="draft">{{#str}}status_draft, mod_learnplugpodcasts{{/str}}</option>
+<option value="unpublished">{{#str}}status_unpublished, mod_learnplugpodcasts{{/str}}</option>
+</select>
+</label>
+<label class="lp-sort">
+{{#str}}filtertranscript, mod_learnplugpodcasts{{/str}}
+<select data-region="lp-filter-transcript">
+<option value="all">{{#str}}filterall, mod_learnplugpodcasts{{/str}}</option>
+<option value="with">{{#str}}filterwithtranscript, mod_learnplugpodcasts{{/str}}</option>
+<option value="without">{{#str}}filterwithouttranscript, mod_learnplugpodcasts{{/str}}</option>
+</select>
+</label>
+<label class="lp-sort">
+{{#str}}filtermedia, mod_learnplugpodcasts{{/str}}
+<select data-region="lp-filter-media">
+<option value="all">{{#str}}filterall, mod_learnplugpodcasts{{/str}}</option>
+<option value="audio">{{#str}}filteraudiofile, mod_learnplugpodcasts{{/str}}</option>
+<option value="external">{{#str}}filterexternallink, mod_learnplugpodcasts{{/str}}</option>
+</select>
+</label>
+<label class="lp-sort">
+{{#str}}filterseason, mod_learnplugpodcasts{{/str}}
+<input type="number" min="0" step="1" class="lp-search"
+data-region="lp-filter-season"
+placeholder="{{#str}}filterseasonplaceholder, mod_learnplugpodcasts{{/str}}">
+</label>
+{{/canmanage}}
+</div>
+{{#hasepisodes}}
+<div class="lp-episode-list" data-region="lp-episode-list">
+{{#episodes}}
+{{> mod_learnplugpodcasts/episode_card }}
+{{/episodes}}
+</div>
+{{/hasepisodes}}
+{{^hasepisodes}}
+<div class="lp-empty">{{#str}}learnerlistempty, mod_learnplugpodcasts{{/str}}</div>
+{{/hasepisodes}}
+</div>
