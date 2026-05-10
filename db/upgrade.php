@@ -219,5 +219,68 @@ function xmldb_learnplugpodcasts_upgrade($oldversion): bool {
         upgrade_mod_savepoint(true, 2026050233, 'learnplugpodcasts');
     }
 
+    if ($oldversion < 2026050409) {
+        $dbman = $DB->get_manager();
+        $table = new xmldb_table('learnplugpodcasts_like');
+
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('podcastid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('episodeid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_key('podcast_fk', XMLDB_KEY_FOREIGN, ['podcastid'], 'learnplugpodcasts', ['id']);
+            $table->add_key('episode_fk', XMLDB_KEY_FOREIGN, ['episodeid'], 'learnplugpodcasts_eps', ['id']);
+            $table->add_key('user_fk', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+
+            $table->add_index('episode_user_uix', XMLDB_INDEX_UNIQUE, ['episodeid', 'userid']);
+
+            $dbman->create_table($table);
+        }
+
+        upgrade_mod_savepoint(true, 2026050409, 'learnplugpodcasts');
+    }
+
+    if ($oldversion < 2026050507) {
+        $mobileservice = $DB->get_record(
+            'external_services',
+            ['shortname' => MOODLE_OFFICIAL_MOBILE_SERVICE],
+            'id',
+            IGNORE_MISSING
+        );
+        if ($mobileservice) {
+            $functionnames = [
+                'mod_learnplugpodcasts_save_progress',
+                'mod_learnplugpodcasts_toggle_like',
+            ];
+            foreach ($functionnames as $functionname) {
+                $function = $DB->get_record(
+                    'external_functions',
+                    ['name' => $functionname],
+                    'id',
+                    IGNORE_MISSING
+                );
+                if (!$function) {
+                    continue;
+                }
+                $exists = $DB->record_exists(
+                    'external_services_functions',
+                    ['externalserviceid' => (int)$mobileservice->id, 'functionname' => $functionname]
+                );
+                if (!$exists) {
+                    $DB->insert_record('external_services_functions', (object)[
+                        'externalserviceid' => (int)$mobileservice->id,
+                        'functionname' => $functionname,
+                    ]);
+                }
+            }
+        }
+
+        upgrade_mod_savepoint(true, 2026050507, 'learnplugpodcasts');
+    }
+
     return true;
 }

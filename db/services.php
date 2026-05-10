@@ -42,6 +42,7 @@ $functions = [
         'type' => 'write',
         'ajax' => true,
         'capabilities' => 'mod/learnplugpodcasts:view',
+        'services' => [MOODLE_OFFICIAL_MOBILE_SERVICE],
     ],
     'mod_learnplugpodcasts_toggle_publish' => [
         'classname' => 'mod_learnplugpodcasts\\external\\toggle_publish',
@@ -60,6 +61,16 @@ $functions = [
         'type' => 'write',
         'ajax' => true,
         'capabilities' => 'mod/learnplugpodcasts:manageepisodes',
+    ],
+    'mod_learnplugpodcasts_toggle_like' => [
+        'classname' => 'mod_learnplugpodcasts\\external\\toggle_like',
+        'methodname' => 'execute',
+        'classpath' => '',
+        'description' => 'Toggle learner like for an episode.',
+        'type' => 'write',
+        'ajax' => true,
+        'capabilities' => 'mod/learnplugpodcasts:view',
+        'services' => [MOODLE_OFFICIAL_MOBILE_SERVICE],
     ],
 ];
 

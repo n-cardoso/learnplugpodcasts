@@ -233,6 +233,12 @@
     font-size: 0.82rem;
 }
 
+.lp-episode-card--manage .lp-episode-likes {
+    margin: 0.14rem 0 0;
+    font-size: 0.82rem;
+    color: #42506b;
+}
+
 .lp-episode-card--manage .lp-episode-description {
     margin: 0.3rem 0 0.45rem;
 }
@@ -700,6 +706,29 @@
 .lp-icon-btn--play:focus {
     background: #0077ed;
     border-color: #0077ed;
+}
+
+.lp-like-btn {
+    gap: 0.32rem;
+    padding: 0 0.58rem;
+    min-width: 3.3rem;
+}
+
+.lp-like-btn__icon {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.lp-like-btn__count {
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.lp-like-btn.is-liked {
+    background: #ffe8ee;
+    border-color: #f7bdcc;
+    color: #be123c;
 }
 
 .lp-channel-playlist {

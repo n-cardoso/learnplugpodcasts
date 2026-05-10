@@ -129,6 +129,19 @@ data-last-position="{{featuredepisode.lastpositionsecs}}">
 <button type="button" class="lp-icon-btn" data-action="seek-forward" aria-label="Forward 10 seconds">10↻</button>
 </div>
 <div class="lp-channel-controls__right">
+{{#canlike}}
+<button type="button"
+class="lp-icon-btn lp-like-btn {{#featuredepisode.userliked}}is-liked{{/featuredepisode.userliked}}"
+data-action="toggle-like"
+data-liked="{{#featuredepisode.userliked}}1{{/featuredepisode.userliked}}{{^featuredepisode.userliked}}0{{/featuredepisode.userliked}}"
+data-like-label="{{#str}}likeepisode, mod_learnplugpodcasts{{/str}}"
+data-unlike-label="{{#str}}unlikeepisode, mod_learnplugpodcasts{{/str}}"
+title="{{#str}}likeepisode, mod_learnplugpodcasts{{/str}}"
+aria-label="{{#str}}likeepisode, mod_learnplugpodcasts{{/str}}">
+<span class="lp-like-btn__icon" data-region="lp-like-icon">♡</span>
+<span class="lp-like-btn__count" data-region="lp-like-count">{{featuredepisode.likecount}}</span>
+</button>
+{{/canlike}}
 <label class="lp-caption-picker"
 data-region="lp-caption-select-wrap"
 {{^featuredepisode.hascaptiontracks}}hidden{{/featuredepisode.hascaptiontracks}}>
@@ -199,6 +212,8 @@ data-caption-lang="{{captiontracklang}}"
 data-caption-tracks="{{captiontracksjson}}"
 data-transcript-text="{{transcripttext}}"
 data-transcript-fileurl="{{transcriptfileurl}}"
+data-like-count="{{likecount}}"
+data-user-liked="{{#userliked}}1{{/userliked}}{{^userliked}}0{{/userliked}}"
 data-external-url="{{externalurl}}">
 <span class="lp-playlist-item__thumb">
 {{#image}}<img src="{{image}}" alt="{{title}}">{{/image}}

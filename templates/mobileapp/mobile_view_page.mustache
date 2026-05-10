@@ -1,108 +1,121 @@
 {{!
 @template mod_learnplugpodcasts/mobileapp/mobile_view_page
 Moodle App view page for LearnPlug Podcasts.
-Example context (json):
-{
-"cmid": 1,
-"courseid": 2,
-"podcastname": "Podcast name",
-"podcastintro": "<p>Intro</p>",
-"coverimage": "https://example.com/cover.jpg",
-"hasepisodes": true,
-"downloadfilesjson": "[]",
-"episodes": [{
-"id": 1,
-"title": "Episode 1",
-"subtitle": "Subtitle",
-"durationlabel": "12:18",
-"description": "Description",
-"audiourl": "https://example.com/audio.mp3",
-"audiodownloadjson": "{}",
-"imageurl": "https://example.com/image.jpg"
-}]
-}
 }}
 {{=<% %>=}}
-<div class="lp-mobile-view">
-<core-course-module-description
-description="<% podcastintro %>"
-component="mod_learnplugpodcasts"
-componentId="<% cmid %>">
-</core-course-module-description>
-<ion-card>
-<ion-card-header>
-<ion-card-title><% podcastname %></ion-card-title>
-</ion-card-header>
-<%#coverimage%>
-<img src="<% coverimage %>" alt="<% podcastname %>">
-<%/coverimage%>
-</ion-card>
-<%#hasepisodes%>
-<ion-item lines="none">
-<ion-label>
-<p>{{ 'plugin.mod_learnplugpodcasts.offlinelisteninghint' | translate }}</p>
-<p><strong>{{ 'plugin.mod_learnplugpodcasts.offlineavailable' | translate }}</strong></p>
-</ion-label>
-<ion-button
-fill="outline"
-core-course-download-module-main-file
-moduleId="<% cmid %>"
-courseId="<% courseid %>"
-component="mod_learnplugpodcasts"
-files="<%& downloadfilesjson %>">
-{{ 'plugin.mod_learnplugpodcasts.downloadallepisodes' | translate }}
-</ion-button>
-</ion-item>
-<%/hasepisodes%>
-<ion-list>
-<ion-list-header>
-<p class="item-heading">{{ 'plugin.mod_learnplugpodcasts.episodes' | translate }}</p>
-</ion-list-header>
-</ion-list>
-<ion-accordion-group>
-<%#episodes%>
-<ion-accordion value="episode-<% id %>">
-<ion-item slot="header" lines="full">
-<%#imageurl%>
-<ion-thumbnail slot="start">
-<img src="<% imageurl %>" alt="<% title %>">
-</ion-thumbnail>
-<%/imageurl%>
-<ion-label>
-<h2><% title %></h2>
-<%#subtitle%><p><% subtitle %></p><%/subtitle%>
-<p><% durationlabel %></p>
-</ion-label>
-</ion-item>
-<div slot="content" style="padding: 0 0.9rem 0.9rem;">
-<%#imageurl%>
-<img src="<% imageurl %>"
-alt="<% title %>"
-style="width: 100%; border-radius: 10px; margin: 0.7rem 0 0.65rem; object-fit: cover;">
-<%/imageurl%>
-<%#description%>
-<p style="margin: 0 0 0.6rem;"><% description %></p>
-<%/description%>
-<audio
-controls
-preload="metadata"
-style="display: block; width: 100%; margin-bottom: 0.65rem;"
-src="<% audiourl %>"></audio>
-<ion-button
-expand="block"
-fill="outline"
-core-download-file="<%& audiodownloadjson %>"
-component="mod_learnplugpodcasts"
-componentId="<% cmid %>">
-{{ 'plugin.mod_learnplugpodcasts.downloadthisepisode' | translate }}
-</ion-button>
-</div>
-</ion-accordion>
-<%/episodes%>
-</ion-accordion-group>
-<%^hasepisodes%>
-<ion-item lines="none">
-<ion-label>{{ 'plugin.mod_learnplugpodcasts.learnerlistempty' | translate }}</ion-label>
-</ion-item>
-<%/hasepisodes%>
+<div class="lp-mobile-view" style="padding: 0.7rem;">
+    <ion-card style="border-radius: 16px; overflow: hidden;">
+        <ion-card-header>
+            <ion-card-title><% podcastname %></ion-card-title>
+        </ion-card-header>
+        <%#coverimage%>
+        <img src="<% coverimage %>" alt="<% podcastname %>">
+        <%/coverimage%>
+        <ion-card-content>
+            <%#podcastintrotext%><p style="margin: 0;"><% podcastintrotext %></p><%/podcastintrotext%>
+        </ion-card-content>
+    </ion-card>
+
+    <h2 style="margin: 1rem 0 0.7rem;"><% episodeslabel %></h2>
+
+    <%#hasepisodes%>
+    <ion-accordion-group>
+        <%#episodes%>
+        <ion-accordion value="episode-<% id %>">
+            <ion-item slot="header" lines="full">
+                <%#imageurl%>
+                <ion-thumbnail slot="start">
+                    <img src="<% imageurl %>" alt="<% title %>">
+                </ion-thumbnail>
+                <%/imageurl%>
+                <ion-label>
+                    <h2><% title %></h2>
+                    <%#subtitle%><p><% subtitle %></p><%/subtitle%>
+                    <p><% durationlabel %></p>
+                </ion-label>
+            </ion-item>
+
+            <div slot="content" style="padding: 0 0.9rem 0.9rem;" data-region="lp-mobile-episode-content">
+                <%#imageurl%>
+                <div style="position: relative; margin: 0.7rem 0 0.65rem;">
+                    <img src="<% imageurl %>" alt="<% title %>"
+                        style="display: block; width: 100%; border-radius: 10px; object-fit: cover;">
+                </div>
+                <%/imageurl%>
+                <%#description%><p style="margin: 0 0 0.6rem;"><% description %></p><%/description%>
+
+                <audio controls preload="metadata" style="display: block; width: 100%; margin-bottom: 0.8rem;"
+                    src="<% audiourl %>" data-region="lp-mobile-audio" data-caption-url="<% captiontrackurl %>"
+                    data-cmid="<% cmid %>" data-episodeid="<% id %>" data-lastposition="<% lastpositionsecs %>">
+                    <%#captiontracks%>
+                    <track kind="subtitles" src="<% url %>" srclang="<% lang %>" label="<% label %>">
+                    <%/captiontracks%>
+                </audio>
+
+                <form id="lp-mobile-progress-form-<% id %>" style="display:none;">
+                    <input type="hidden" name="cmid" value="<% cmid %>">
+                    <input type="hidden" name="episodeid" value="<% id %>">
+                    <input type="hidden" name="positionsecs" value="0">
+                    <input type="hidden" name="advanceddelta" value="0">
+                    <input type="hidden" name="durationsecs" value="0">
+                    <input type="hidden" name="playstate" value="paused">
+                </form>
+                <ion-button style="display:none;" data-region="lp-mobile-progress-sync"
+                    core-site-plugins-call-ws name="mod_learnplugpodcasts_save_progress"
+                    form="lp-mobile-progress-form-<% id %>"></ion-button>
+
+                <%#hascaptiontracks%>
+                <p data-region="lp-mobile-caption-live" hidden
+                    style="margin: 0 0 0.75rem; padding: 0.55rem 0.65rem; border-radius: 8px; background: rgba(0, 0, 0, .72); color: #fff; font-size: .95rem; text-align: center;"></p>
+                <%/hascaptiontracks%>
+
+                <%#hascaptiontracks%>
+                <p style="font-size: 0.9rem; margin: 0 0 0.75rem;">
+                    <% captionlabel %>
+                </p>
+                <select data-region="lp-mobile-caption-select" style="display: block; width: 100%; margin: 0 0 0.6rem;">
+                    <option value=""><% captionofflabel %></option>
+                    <%#captiontracks%>
+                    <option value="<% url %>" <%#isselected%>selected<%/isselected%>><% label %></option>
+                    <%/captiontracks%>
+                </select>
+                <%/hascaptiontracks%>
+
+                <%#canlike%>
+                <form id="lp-mobile-like-form-<% id %>" style="display:none;">
+                    <input type="hidden" name="cmid" value="<% cmid %>">
+                    <input type="hidden" name="episodeid" value="<% id %>">
+                </form>
+                <ion-button
+                    expand="block"
+                    fill="outline"
+                    color="<%#userliked%>danger<%/userliked%><%^userliked%>medium<%/userliked%>"
+                    core-site-plugins-call-ws
+                    name="mod_learnplugpodcasts_toggle_like"
+                    form="lp-mobile-like-form-<% id %>"
+                    refreshOnSuccess="true"
+                    style="margin: 0 0 0.75rem;">
+                    <%#userliked%>♥<%/userliked%><%^userliked%>♡<%/userliked%>&nbsp;
+                    <%#userliked%><% likeonlabel %><%/userliked%>
+                    <%^userliked%><% likeofflabel %><%/userliked%>
+                    (<%#likecount%><% likecount %><%/likecount%><%^likecount%>0<%/likecount%>)
+                </ion-button>
+                <%/canlike%>
+
+                <core-file
+                    [file]='<% audiodownloadjson %>'
+                    component="mod_learnplugpodcasts"
+                    componentId="<% cmid %>">
+                </core-file>
+            </div>
+        </ion-accordion>
+        <%/episodes%>
+    </ion-accordion-group>
+    <%/hasepisodes%>
+
+    <%^hasepisodes%>
+    <ion-item lines="none">
+        <ion-label><% emptylabel %></ion-label>
+    </ion-item>
+    <%/hasepisodes%>
 </div>

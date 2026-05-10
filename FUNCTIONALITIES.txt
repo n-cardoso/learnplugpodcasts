@@ -1,0 +1,124 @@
+LearnPlug Podcasts - Functionalities (Stable 1.0.0)
+====================================================
+
+Plugin type and compatibility
+-----------------------------
+- Moodle activity module: mod_learnplugpodcasts
+- Moodle compatibility: 4.5+
+- PHP compatibility: 8.1+
+- Database compatibility: MariaDB/MySQL + PostgreSQL-compatible Moodle APIs
+
+Podcast series management
+-------------------------
+- Create one podcast series per activity instance inside a course.
+- Configure series metadata:
+  - Title
+  - Subtitle
+  - Author name
+  - Description
+  - Language
+  - Category
+  - Explicit-content flag
+  - Copyright and contact fields
+- Upload and manage podcast cover image.
+- Configure learner-facing display settings:
+  - Search visibility
+  - Sort visibility and default sort
+  - Descriptions visibility
+  - Transcripts visibility
+  - Subscribe/share block visibility
+
+Episode management (teacher/admin)
+----------------------------------
+- Create, edit, publish/unpublish, and delete episodes.
+- Reorder episodes.
+- Episode fields:
+  - Title
+  - Subtitle
+  - Description/show notes
+  - Season and episode numbers
+  - Publish date/time
+  - Explicit-content flag
+  - External episode URL (optional)
+- Upload episode media via Moodle File API:
+  - Audio file
+  - Episode image
+  - Transcript file/text
+  - Multiple caption tracks (.vtt)
+  - Attachments
+- Audio duration handling:
+  - Automatic duration extraction from uploaded audio
+  - WAV header fallback for more reliable duration detection
+- Admin/teacher compact episode cards for faster management.
+
+Learner experience (web)
+------------------------
+- Modern player-first channel UI.
+- Featured episode with image, description, audio controls, and playlist.
+- Search episodes and sort episodes from learner UI.
+- Resume listening from last saved position.
+- Live listening progress display.
+- Like/unlike per episode with visible like count.
+- Captions:
+  - Select among available VTT tracks
+  - Show caption text synced by timestamps in player UI
+- Transcript section per episode (when available).
+- Download transcript link (when available and allowed).
+
+Public distribution
+-------------------
+- Optional public podcast landing page.
+- Optional public episode pages.
+- Optional public RSS feed endpoint for podcast directory submission.
+- RSS includes published episodes only, with stable GUID and enclosure metadata.
+
+Progress, completion, and grading
+---------------------------------
+- Progress tracking with anti-abuse logic (only counts real playback advance).
+- Completion support:
+  - By view
+  - Playback started
+  - Listen at least X% of one episode
+  - Listen at least N episodes
+- Gradebook integration:
+  - Optional grade item
+  - Deterministic grade calculation from listening progress
+
+Analytics and reporting
+-----------------------
+- Teacher/admin listening analytics:
+  - Per-episode progress metrics
+  - Overall activity metrics
+- Episode likes are tracked and visible in management analytics context.
+
+Mobile app support
+------------------
+- Moodle app course module view integration.
+- Episode accordion UX in mobile page template.
+- In-episode player with progress sync to Moodle backend.
+- Captions selector and timestamp-based caption text box under player.
+- Like/unlike support in mobile UI.
+- Offline-ready file access through Moodle mobile file components.
+
+Security and compliance
+-----------------------
+- Capability checks enforced across management and state-changing actions.
+- Sesskey protection for browser-origin state changes.
+- External API parameter validation with Moodle external API contracts.
+- File access controlled through Moodle pluginfile logic and context checks.
+- Draft/unpublished content not exposed in public endpoints.
+- Privacy API provider included for personal data export/deletion support.
+- Backup and restore support for activity data and episode records.
+
+Technical architecture highlights
+---------------------------------
+- Moodle-native architecture (forms, services, renderers, Mustache templates).
+- AMD modules for player, progress, episode management, and search behavior.
+- Scheduled tasks defined for maintenance jobs.
+- Event classes for key activity lifecycle and learner interactions.
+- Web service functions for AJAX/mobile actions.
+
+Current stable package baseline
+-------------------------------
+- Stable release label: 1.0.0 Stable
+- Build version: 2026050510

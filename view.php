@@ -32,6 +32,7 @@ use mod_learnplugpodcasts\local\repository\episode_repository;
 use mod_learnplugpodcasts\local\service\analytics_service;
 use mod_learnplugpodcasts\local\service\caption_service;
 use mod_learnplugpodcasts\local\service\episode_service;
+use mod_learnplugpodcasts\local\service\like_service;
 use mod_learnplugpodcasts\local\service\public_access_service;
 use mod_learnplugpodcasts\local\service\transcript_service;
 use mod_learnplugpodcasts\local\util\mime;
@@ -41,7 +42,7 @@ $action = optional_param('action', '', PARAM_ALPHA);
 $episodeid = optional_param('episodeid', 0, PARAM_INT);
 $confirm = optional_param('confirm', 0, PARAM_BOOL);
 $sort = optional_param('sort', '', PARAM_ALPHA);
-$search = optional_param('q', '', PARAM_RAW_TRIMMED);
+$search = optional_param('q', '', PARAM_TEXT);
 $page = optional_param('page', 0, PARAM_INT);
 
 $cm = get_coursemodule_from_id('learnplugpodcasts', $id, 0, false, MUST_EXIST);
@@ -78,6 +79,7 @@ $episodeservice = new episode_service();
 $analyticsservice = new analytics_service();
 $transcriptservice = new transcript_service();
 $captionservice = new caption_service();
+$likeservice = new like_service();
 $publicaccess = new public_access_service();
 $episoderepo = new episode_repository();
 
@@ -205,6 +207,14 @@ $onlypublished = !$canmanage;
 $perpage = max(1, (int)$podcast->episodesperpage);
 $episodes = $episodeservice->get_for_display((int)$podcast->id, $onlypublished, $sort, $page, $perpage, $search);
 $totalepisodes = $episodeservice->count((int)$podcast->id, $onlypublished, $search);
+$episodeids = array_values(array_map(static fn($episode) => (int)$episode->id, $episodes));
+$episodeids = array_values(array_unique($episodeids));
+$likecounts = $likeservice->get_episode_like_counts($episodeids);
+$canlike = isloggedin() && !isguestuser();
+$userlikedmap = [];
+if ($canlike) {
+    $userlikedmap = $likeservice->get_user_liked_episode_map((int)$USER->id, $episodeids);
+}
 
 $progressmap = [];
 if (isloggedin() && !isguestuser()) {
@@ -311,6 +321,8 @@ foreach ($episodes as $episode) {
     $episode->listenedpercent = (float)($episodeprogress->listenedpercent ?? 0);
     $episode->lastpositionsecs = (int)($episodeprogress->lastpositionsecs ?? 0);
     $episode->iscompleted = !empty($episodeprogress->completed);
+    $episode->likecount = (int)($likecounts[(int)$episode->id] ?? 0);
+    $episode->userliked = !empty($userlikedmap[(int)$episode->id]);
 
     if ($canmanage) {
         $episode->manageediturl = (new moodle_url('/mod/learnplugpodcasts/view.php', [
@@ -369,6 +381,7 @@ $renderable = new podcast_view($podcast, array_values($episodes), [
     'sort' => $sort,
     'page' => $page,
     'analytics' => $analytics,
+    'canlike' => $canlike,
 ]);
 
 $PAGE->requires->js_call_amd('mod_learnplugpodcasts/player', 'init');

@@ -178,6 +178,7 @@ function learnplugpodcasts_delete_instance($id): bool {
     }
 
     $DB->delete_records('learnplugpodcasts_prog', ['podcastid' => $podcast->id]);
+    $DB->delete_records('learnplugpodcasts_like', ['podcastid' => $podcast->id]);
     $DB->delete_records('learnplugpodcasts_log', ['podcastid' => $podcast->id]);
     $DB->delete_records('learnplugpodcasts_eps', ['podcastid' => $podcast->id]);
     $DB->delete_records('learnplugpodcasts', ['id' => $podcast->id]);
@@ -503,6 +504,7 @@ function learnplugpodcasts_reset_userdata($data): array {
         $instances = $DB->get_records('learnplugpodcasts', ['course' => $data->courseid]);
         foreach ($instances as $instance) {
             $DB->delete_records('learnplugpodcasts_prog', ['podcastid' => $instance->id]);
+            $DB->delete_records('learnplugpodcasts_like', ['podcastid' => $instance->id]);
             learnplugpodcasts_update_grades($instance);
         }
         $status[] = [

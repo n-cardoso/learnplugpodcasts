@@ -39,7 +39,7 @@ class search_episodes extends external_api {
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
             'cmid' => new external_value(PARAM_INT, 'Course module id'),
-            'query' => new external_value(PARAM_RAW_TRIMMED, 'Search string', VALUE_DEFAULT, ''),
+            'query' => new external_value(PARAM_TEXT, 'Search string', VALUE_DEFAULT, ''),
             'sort' => new external_value(PARAM_ALPHA, 'Sort mode', VALUE_DEFAULT, 'newest'),
             'page' => new external_value(PARAM_INT, 'Page index', VALUE_DEFAULT, 0),
         ]);

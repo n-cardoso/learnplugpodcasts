@@ -68,7 +68,7 @@ if ($ADMIN->fulltree) {
         get_string('allowedaudiomimetypes', 'learnplugpodcasts'),
         get_string('allowedaudiomimetypes_desc', 'learnplugpodcasts'),
         \mod_learnplugpodcasts\local\util\mime::default_allowed_audio_types_string(),
-        PARAM_RAW_TRIMMED
+        PARAM_TEXT
     ));
 
     $settings->add(new admin_setting_configtext(

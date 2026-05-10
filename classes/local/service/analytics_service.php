@@ -48,12 +48,19 @@ class analytics_service {
                     COALESCE(AVG(p.listenedpercent), 0) AS avglistenedpercent,
                     COALESCE(SUM(p.listenedsecs), 0) AS totallistenedsecs,
                     COALESCE(SUM(CASE WHEN p.completed = 1 THEN 1 ELSE 0 END), 0) AS completions,
+                    COALESCE(l.likes, 0) AS likes,
                     COALESCE(MAX(p.timemodified), 0) AS lastactivity
                FROM {learnplugpodcasts_eps} e
           LEFT JOIN {learnplugpodcasts_prog} p
                  ON p.episodeid = e.id
+          LEFT JOIN (
+                    SELECT episodeid, COUNT(1) AS likes
+                      FROM {learnplugpodcasts_like}
+                  GROUP BY episodeid
+          ) l
+                 ON l.episodeid = e.id
               WHERE e.podcastid = :podcastid
-           GROUP BY e.id, e.title, e.draftstatus, e.durationsecs, e.publishtime, e.sortorder
+           GROUP BY e.id, e.title, e.draftstatus, e.durationsecs, e.publishtime, e.sortorder, l.likes
            ORDER BY e.sortorder ASC, e.publishtime DESC, e.id DESC",
             ['podcastid' => $podcastid]
         );
@@ -64,6 +71,7 @@ class analytics_service {
         $overallprogressrows = 0;
         $overallcompletions = 0;
         $overalltotalsecs = 0;
+        $overalllikes = 0;
         $weightedpercentsum = 0.0;
         $reportrows = [];
 
@@ -77,11 +85,13 @@ class analytics_service {
             $completions = (int)$row->completions;
             $avgpercent = (float)$row->avglistenedpercent;
             $totalsecs = (int)$row->totallistenedsecs;
+            $likes = (int)$row->likes;
 
             $overalllisteners += $listeners;
             $overallprogressrows += $progressrows;
             $overallcompletions += $completions;
             $overalltotalsecs += $totalsecs;
+            $overalllikes += $likes;
             $weightedpercentsum += ($avgpercent * $progressrows);
 
             $completionrate = $listeners > 0 ? ($completions / $listeners) * 100 : 0;
@@ -95,6 +105,7 @@ class analytics_service {
                 'avglistenedpercent' => $this->format_percent($avgpercent),
                 'completionrate' => $this->format_percent($completionrate),
                 'completions' => $completions,
+                'likes' => $likes,
                 'duration' => duration::format_hms((int)$row->durationsecs),
                 'totallistened' => duration::format_hms($totalsecs),
                 'lastactivity' => !empty($row->lastactivity) ? userdate((int)$row->lastactivity) : '-',
@@ -137,6 +148,11 @@ class analytics_service {
                     'label' => get_string('analyticscard_episodecoverage', 'learnplugpodcasts'),
                     'value' => $publishedcount . '/' . $episodecount,
                     'sub' => get_string('analyticscard_episodecoverage_sub', 'learnplugpodcasts'),
+                ],
+                [
+                    'label' => get_string('analyticscard_totallikes', 'learnplugpodcasts'),
+                    'value' => (string)$overalllikes,
+                    'sub' => get_string('analyticscard_totallikes_sub', 'learnplugpodcasts'),
                 ],
             ],
             'rows' => $reportrows,

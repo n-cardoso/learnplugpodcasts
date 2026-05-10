@@ -60,6 +60,14 @@ class provider implements
             'timecreated' => 'privacy:metadata:learnplugpodcasts_prog:timecreated',
         ], 'privacy:metadata:learnplugpodcasts_prog');
 
+        $collection->add_database_table('learnplugpodcasts_like', [
+            'userid' => 'privacy:metadata:learnplugpodcasts_like:userid',
+            'podcastid' => 'privacy:metadata:learnplugpodcasts_like:podcastid',
+            'episodeid' => 'privacy:metadata:learnplugpodcasts_like:episodeid',
+            'timemodified' => 'privacy:metadata:learnplugpodcasts_like:timemodified',
+            'timecreated' => 'privacy:metadata:learnplugpodcasts_like:timecreated',
+        ], 'privacy:metadata:learnplugpodcasts_like');
+
         $collection->add_subsystem_link(
             'core_message',
             [],
@@ -104,6 +112,19 @@ class provider implements
                          ON lp.id = cm.instance
                       WHERE lp.owneruserid = :userid";
         $contextlist->add_from_sql($sqlowner, [
+            'contextmodule' => CONTEXT_MODULE,
+            'modname' => 'learnplugpodcasts',
+            'userid' => $userid,
+        ]);
+
+        $sqllikes = "SELECT DISTINCT ctx.id
+                       FROM {context} ctx
+                       JOIN {course_modules} cm ON cm.id = ctx.instanceid AND ctx.contextlevel = :contextmodule
+                       JOIN {modules} m ON m.id = cm.module AND m.name = :modname
+                       JOIN {learnplugpodcasts} lp ON lp.id = cm.instance
+                       JOIN {learnplugpodcasts_like} l ON l.podcastid = lp.id
+                      WHERE l.userid = :userid";
+        $contextlist->add_from_sql($sqllikes, [
             'contextmodule' => CONTEXT_MODULE,
             'modname' => 'learnplugpodcasts',
             'userid' => $userid,
@@ -160,6 +181,26 @@ class provider implements
                 $exportdata->progress = $export;
             }
 
+            $likerows = $DB->get_records_sql(
+                "SELECT l.*, e.title
+                   FROM {learnplugpodcasts_like} l
+                   JOIN {learnplugpodcasts_eps} e ON e.id = l.episodeid
+                  WHERE l.podcastid = :podcastid AND l.userid = :userid",
+                ['podcastid' => $cm->instance, 'userid' => $contextlist->get_user()->id]
+            );
+
+            if ($likerows) {
+                $exportlikes = [];
+                foreach ($likerows as $row) {
+                    $exportlikes[] = [
+                        'episode' => $row->title,
+                        'timecreated' => transform::datetime($row->timecreated),
+                        'timemodified' => transform::datetime($row->timemodified),
+                    ];
+                }
+                $exportdata->likes = $exportlikes;
+            }
+
             if (!empty((array)$exportdata)) {
                 writer::with_context($context)->export_data([get_string('pluginname', 'learnplugpodcasts')], $exportdata);
             }
@@ -184,6 +225,7 @@ class provider implements
         }
 
         $DB->delete_records('learnplugpodcasts_prog', ['podcastid' => $cm->instance]);
+        $DB->delete_records('learnplugpodcasts_like', ['podcastid' => $cm->instance]);
         $DB->set_field('learnplugpodcasts', 'owneruserid', 0, ['id' => $cm->instance]);
     }
 
@@ -205,6 +247,7 @@ class provider implements
                 continue;
             }
             $DB->delete_records('learnplugpodcasts_prog', ['podcastid' => $cm->instance, 'userid' => $userid]);
+            $DB->delete_records('learnplugpodcasts_like', ['podcastid' => $cm->instance, 'userid' => $userid]);
             $DB->set_field(
                 'learnplugpodcasts',
                 'owneruserid',
@@ -240,6 +283,14 @@ class provider implements
                         AND m.name = :modname
                         AND lp.owneruserid > 0";
         $userlist->add_from_sql('userid', $sqlowner, ['cmid' => $context->instanceid, 'modname' => 'learnplugpodcasts']);
+
+        $sqllikes = "SELECT l.userid
+                       FROM {learnplugpodcasts_like} l
+                       JOIN {course_modules} cm ON cm.instance = l.podcastid
+                       JOIN {modules} m ON m.id = cm.module
+                      WHERE cm.id = :cmid
+                        AND m.name = :modname";
+        $userlist->add_from_sql('userid', $sqllikes, ['cmid' => $context->instanceid, 'modname' => 'learnplugpodcasts']);
     }
 
     /**
@@ -263,6 +314,7 @@ class provider implements
         [$in, $params] = $DB->get_in_or_equal($userlist->get_userids(), SQL_PARAMS_NAMED, 'uid');
         $params['podcastid'] = $cm->instance;
         $DB->delete_records_select('learnplugpodcasts_prog', "podcastid = :podcastid AND userid {$in}", $params);
+        $DB->delete_records_select('learnplugpodcasts_like', "podcastid = :podcastid AND userid {$in}", $params);
         $DB->execute(
             "UPDATE {learnplugpodcasts}
                 SET owneruserid = 0

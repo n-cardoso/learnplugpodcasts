@@ -21,111 +21,101 @@ use core_external\external_function_parameters;
 use core_external\external_single_structure;
 use core_external\external_value;
 use mod_learnplugpodcasts\local\service\episode_service;
-use mod_learnplugpodcasts\local\service\progress_service;
+use mod_learnplugpodcasts\local\service\like_service;
 
 /**
- * Class definition.
+ * Toggle like for an episode.
  *
  * @package mod_learnplugpodcasts
  * @copyright 2026 LearnPlug
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class save_progress extends external_api {
+class toggle_like extends external_api {
     /**
-     * Params.
+     * Input params.
      *
-     * @return \external_function_parameters
+     * @return external_function_parameters
      */
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
-            'cmid' => new external_value(PARAM_INT, 'Course module id'),
+            'cmid' => new external_value(PARAM_INT, 'Course module id', VALUE_DEFAULT, 0),
             'episodeid' => new external_value(PARAM_INT, 'Episode id'),
-            'positionsecs' => new external_value(PARAM_INT, 'Playback position in seconds'),
-            'advanceddelta' => new external_value(PARAM_FLOAT, 'Advancing playback delta in seconds'),
-            'durationsecs' => new external_value(PARAM_INT, 'Episode duration in seconds'),
-            'playstate' => new external_value(PARAM_ALPHA, 'Playback state', VALUE_DEFAULT, 'playing'),
         ]);
     }
 
     /**
-     * Execute.
+     * Execute endpoint.
      *
-     * @param int $cmid
+     * @param int $cmid Optional course module id (0 will resolve from episode)
      * @param int $episodeid
-     * @param int $positionsecs
-     * @param float $advanceddelta
-     * @param int $durationsecs
-     * @param string $playstate
      * @return array
      */
-    public static function execute(
-        int $cmid,
-        int $episodeid,
-        int $positionsecs,
-        float $advanceddelta,
-        int $durationsecs,
-        string $playstate = 'playing'
-    ): array {
+    public static function execute(int $cmid, int $episodeid): array {
         global $DB, $USER;
 
         $wstoken = optional_param('wstoken', '', PARAM_ALPHANUMEXT);
         if ($wstoken === '') {
             require_sesskey();
         }
-
         $params = self::validate_parameters(self::execute_parameters(), [
             'cmid' => $cmid,
             'episodeid' => $episodeid,
-            'positionsecs' => $positionsecs,
-            'advanceddelta' => $advanceddelta,
-            'durationsecs' => $durationsecs,
-            'playstate' => $playstate,
         ]);
 
-        $cm = get_coursemodule_from_id('learnplugpodcasts', $params['cmid'], 0, false, MUST_EXIST);
+        $episode = (new episode_service())->get_by_id($params['episodeid']);
+        if (!$episode) {
+            throw new \invalid_parameter_exception(get_string('errornoepisode', 'learnplugpodcasts'));
+        }
+
+        if ((int)$params['cmid'] > 0) {
+            $cm = get_coursemodule_from_id('learnplugpodcasts', $params['cmid'], 0, false, MUST_EXIST);
+        } else {
+            $cm = get_coursemodule_from_instance(
+                'learnplugpodcasts',
+                (int)$episode->podcastid,
+                0,
+                false,
+                MUST_EXIST
+            );
+        }
+
         $course = get_course($cm->course);
         require_login($course, false, $cm);
+
+        if (isguestuser()) {
+            throw new \invalid_parameter_exception(get_string('errorcapability', 'learnplugpodcasts'));
+        }
 
         $context = \context_module::instance($cm->id);
         self::validate_context($context);
         require_capability('mod/learnplugpodcasts:view', $context);
 
         $podcast = $DB->get_record('learnplugpodcasts', ['id' => $cm->instance], '*', MUST_EXIST);
-        $episodeservice = new episode_service();
-        $episode = $episodeservice->get_by_id($params['episodeid']);
-        if (!$episode || (int)$episode->podcastid !== (int)$podcast->id) {
+        if ((int)$episode->podcastid !== (int)$podcast->id) {
             throw new \invalid_parameter_exception(get_string('errornoepisode', 'learnplugpodcasts'));
         }
 
-        $progressservice = new progress_service();
-        $saved = $progressservice->save_progress(
-            $podcast,
-            $episode,
-            $context,
-            (int)$USER->id,
-            $params['positionsecs'],
-            $params['advanceddelta'],
-            $params['durationsecs'],
-            $params['playstate']
+        $result = (new like_service())->toggle_like(
+            (int)$podcast->id,
+            (int)$episode->id,
+            (int)$USER->id
         );
 
         return [
-            'listenedpercent' => (float)$saved->listenedpercent,
-            'lastpositionsecs' => (int)$saved->lastpositionsecs,
-            'completed' => (int)$saved->completed,
+            'liked' => (int)$result['liked'],
+            'likecount' => (int)$result['likecount'],
         ];
     }
 
     /**
      * Return structure.
      *
-     * @return \external_single_structure
+     * @return external_single_structure
      */
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
-            'listenedpercent' => new external_value(PARAM_FLOAT, 'Current listened percent'),
-            'lastpositionsecs' => new external_value(PARAM_INT, 'Saved position'),
-            'completed' => new external_value(PARAM_INT, 'Completed flag 0/1'),
+            'liked' => new external_value(PARAM_INT, '1 when liked, else 0'),
+            'likecount' => new external_value(PARAM_INT, 'Current like count'),
         ]);
     }
 }

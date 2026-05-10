@@ -1,4 +1,4 @@
-define([], function() {
+define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
     const SPEED_STEPS = [1, 1.25, 1.5, 2];
 
     const formatClock = (seconds) => {
@@ -134,6 +134,9 @@ define([], function() {
         const channelSearch = root.querySelector('[data-region="lp-channel-search"]');
         const channelSort = root.querySelector('[data-region="lp-channel-sort"]');
         const speedBtn = root.querySelector('[data-action="speed-toggle"]');
+        const likeBtn = root.querySelector('[data-action="toggle-like"]');
+        const likeIcon = root.querySelector('[data-region="lp-like-icon"]');
+        const likeCount = root.querySelector('[data-region="lp-like-count"]');
         const captionSelectWrap = root.querySelector('[data-region="lp-caption-select-wrap"]');
         const captionSelect = root.querySelector('[data-region="lp-caption-select"]');
         const transcriptDetails = root.querySelector('[data-region="lp-transcript-details"]');
@@ -144,6 +147,32 @@ define([], function() {
         const captionOverlay = root.querySelector('[data-region="lp-caption-overlay"]');
         let captionCues = [];
         let captionLoadToken = 0;
+        let likePending = false;
+
+        const getPodcastRoot = () => root.closest('[data-region="lp-podcast"]');
+
+        const setLikeUi = (liked, count) => {
+            if (!likeBtn) {
+                return;
+            }
+            const isliked = !!liked;
+            const numericcount = Number(count || 0);
+            const label = isliked ?
+                String(likeBtn.dataset.unlikeLabel || 'Unlike episode') :
+                String(likeBtn.dataset.likeLabel || 'Like episode');
+
+            likeBtn.dataset.liked = isliked ? '1' : '0';
+            likeBtn.classList.toggle('is-liked', isliked);
+            likeBtn.setAttribute('aria-label', label);
+            likeBtn.setAttribute('title', label);
+
+            if (likeIcon) {
+                likeIcon.textContent = isliked ? '♥' : '♡';
+            }
+            if (likeCount) {
+                likeCount.textContent = String(Math.max(0, Math.floor(numericcount)));
+            }
+        };
 
         const parseCaptionTracks = (raw) => {
             const text = String(raw || '').trim();
@@ -370,6 +399,10 @@ define([], function() {
                 const percent = Math.round(Number(item.dataset.listenedPercent || 0));
                 progressLabel.textContent = `Listened: ${percent}%`;
             }
+            setLikeUi(
+                Number(item.dataset.userLiked || 0) === 1,
+                Number(item.dataset.likeCount || 0)
+            );
         };
 
         const syncFeaturedTranscript = (item) => {
@@ -409,6 +442,22 @@ define([], function() {
             const tracks = normaliseTracks(parsedTracks, audio.dataset.captionUrl || '', audio.dataset.captionLang || '');
             updateCaptionSelector(tracks, audio.dataset.captionUrl || '');
             loadCaptionTrack(audio.dataset.captionUrl || '');
+        };
+
+        const persistLikeStateOnItem = (episodeid, liked, count) => {
+            const targetid = Number(episodeid || 0);
+            if (!targetid) {
+                return;
+            }
+
+            const numericcount = String(Math.max(0, Math.floor(Number(count || 0))));
+            const likedvalue = liked ? '1' : '0';
+            getPlaylistItems().forEach((item) => {
+                if (Number(item.dataset.episodeId || 0) === targetid) {
+                    item.dataset.userLiked = likedvalue;
+                    item.dataset.likeCount = numericcount;
+                }
+            });
         };
 
         const selectEpisode = (item) => {
@@ -497,6 +546,39 @@ define([], function() {
                     loadCaptionTrack(url);
                 });
             }
+
+            if (likeBtn) {
+                likeBtn.addEventListener('click', () => {
+                    if (likePending) {
+                        return;
+                    }
+                    const podcastroot = getPodcastRoot();
+                    const cmid = Number(podcastroot?.dataset.cmid || 0);
+                    const episodeid = Number(audio.dataset.episodeId || 0);
+                    if (!cmid || !episodeid) {
+                        return;
+                    }
+
+                    likePending = true;
+                    likeBtn.disabled = true;
+                    Ajax.call([{
+                        methodname: 'mod_learnplugpodcasts_toggle_like',
+                        args: {
+                            cmid: cmid,
+                            episodeid: episodeid
+                        }
+                    }])[0].then((response) => {
+                        const liked = Number(response.liked || 0) === 1;
+                        const count = Number(response.likecount || 0);
+                        setLikeUi(liked, count);
+                        persistLikeStateOnItem(episodeid, liked, count);
+                        return response;
+                    }).catch(Notification.exception).finally(() => {
+                        likePending = false;
+                        likeBtn.disabled = false;
+                    });
+                });
+            }
         };
 
         const bindPlaylistAndDiscovery = () => {
@@ -537,6 +619,10 @@ define([], function() {
         );
         updateCaptionSelector(initialTracks, audio.dataset.captionUrl || '');
         loadCaptionTrack(audio.dataset.captionUrl || '');
+        setLikeUi(
+            Number(likeBtn?.dataset.liked || 0) === 1,
+            Number(likeCount?.textContent || 0)
+        );
         bindCoreAudioEvents();
         bindPlayerControls();
         bindPlaylistAndDiscovery();

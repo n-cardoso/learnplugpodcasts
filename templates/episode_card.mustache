@@ -43,6 +43,7 @@ data-has-external="{{#hasexternalurl}}1{{/hasexternalurl}}{{^hasexternalurl}}0{{
             <h3>{{title}}{{^title}}Episode{{/title}}</h3>
 {{#subtitle}}<p class="lp-episode-subtitle">{{subtitle}}</p>{{/subtitle}}
 <p class="lp-episode-meta">{{publishtime}} • {{duration}}</p>
+{{#canmanage}}<p class="lp-episode-likes">{{#str}}analytics_likes, mod_learnplugpodcasts{{/str}}: {{likecount}}</p>{{/canmanage}}
 </div>
 {{#ismarkedpublished}}
 <span class="lp-status lp-status--published">{{#str}}publishedlabel, mod_learnplugpodcasts{{/str}}</span>
