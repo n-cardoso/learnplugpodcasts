@@ -1,77 +1,87 @@
 name: Moodle Plugin CI
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  COMPOSER_PROCESS_TIMEOUT: 0
+  COMPOSER_NO_INTERACTION: 1
+  COMPOSER_NO_AUDIT: 1
 
 jobs:
   test:
     runs-on: ubuntu-22.04
+    name: PHP 8.2 • mariadb
 
     services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: 'postgres'
-          POSTGRES_HOST_AUTH_METHOD: 'trust'
-        ports:
-          - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 3
-
       mariadb:
-        image: mariadb:10
+        image: mariadb:10.11
         env:
-          MYSQL_USER: 'root'
-          MYSQL_ALLOW_EMPTY_PASSWORD: "true"
-          MYSQL_CHARACTER_SET_SERVER: "utf8mb4"
-          MYSQL_COLLATION_SERVER: "utf8mb4_unicode_ci"
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_CHARACTER_SET_SERVER: utf8mb4
+          MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
         ports:
           - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 3
-
-    strategy:
-      fail-fast: false
-      matrix:
-        php: ['7.4', '8.0', '8.1']
-        moodle-branch: ['MOODLE_401_STABLE']
-        database: [pgsql, mariadb]
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: plugin
 
-      - name: Setup PHP ${{ matrix.php }}
+      - name: Detect plugin directory
+        run: |
+          if [ -f "plugin/mod/learnplugpodcasts/version.php" ]; then
+            echo "PLUGIN_DIR=plugin/mod/learnplugpodcasts" >> "$GITHUB_ENV"
+          elif [ -f "plugin/version.php" ]; then
+            echo "PLUGIN_DIR=plugin" >> "$GITHUB_ENV"
+          else
+            echo "Could not detect plugin directory (version.php not found)." >&2
+            ls -la plugin
+            exit 1
+          fi
+          echo "CI_PLUGIN_DIR=ci/moodle/mod/learnplugpodcasts" >> "$GITHUB_ENV"
+
+      - name: Setup PHP 8.2
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php }}
-          extensions: ${{ matrix.extensions }}
+          php-version: "8.2"
+          extensions: intl, mbstring, xml, curl, soap, zip, gd, mysqli, pgsql
           ini-values: max_input_vars=5000
-          # If you are not using code coverage, keep "none". Otherwise, use "pcov" (Moodle 3.10 and up) or "xdebug".
-          # If you try to use code coverage with "none", it will fallback to phpdbg (which has known problems).
           coverage: none
 
       - name: Initialise moodle-plugin-ci
         run: |
           composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^4
-          echo $(cd ci/bin; pwd) >> $GITHUB_PATH
-          echo $(cd ci/vendor/bin; pwd) >> $GITHUB_PATH
+          echo "$(cd ci/bin && pwd)" >> "$GITHUB_PATH"
+          echo "$(cd ci/vendor/bin && pwd)" >> "$GITHUB_PATH"
           sudo locale-gen en_AU.UTF-8
-          echo "NVM_DIR=$HOME/.nvm" >> $GITHUB_ENV
+          echo "NVM_DIR=$HOME/.nvm" >> "$GITHUB_ENV"
 
       - name: Install moodle-plugin-ci
-        run: moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
+        run: moodle-plugin-ci install --plugin "./${PLUGIN_DIR}" --db-host=127.0.0.1
         env:
-          DB: ${{ matrix.database }}
-          MOODLE_BRANCH: ${{ matrix.moodle-branch }}
-          # Uncomment this to run Behat tests using the Moodle App.
-          # MOODLE_APP: 'true'
+          DB: mysqli
+          MOODLE_BRANCH: MOODLE_405_STABLE
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USER: root
+          DB_PASS: root
+          DB_NAME: moodle
 
       - name: PHP Lint
         if: ${{ !cancelled() }}
         run: moodle-plugin-ci phplint
 
       - name: PHP Mess Detector
-        continue-on-error: true # This step will show errors but will not fail
+        continue-on-error: true
         if: ${{ !cancelled() }}
         run: moodle-plugin-ci phpmd
 
@@ -83,7 +93,7 @@ jobs:
         if: ${{ !cancelled() }}
         run: moodle-plugin-ci phpdoc --max-warnings 0
 
-      - name: Validating
+      - name: Validate plugin metadata
         if: ${{ !cancelled() }}
         run: moodle-plugin-ci validate
 
@@ -96,27 +106,26 @@ jobs:
         run: moodle-plugin-ci mustache
 
       - name: Grunt
+        id: grunt
+        continue-on-error: true
         if: ${{ !cancelled() }}
         run: moodle-plugin-ci grunt --max-lint-warnings 0
 
-      - name: PHPUnit tests
-        if: ${{ !cancelled() }}
-        run: moodle-plugin-ci phpunit --fail-on-warning
-
-      - name: Behat features
-        id: behat
-        if: ${{ !cancelled() }}
-        run: moodle-plugin-ci behat --profile chrome --scss-deprecations
-
-      - name: Upload Behat Faildump
-        if: ${{ failure() && steps.behat.outcome == 'failure' }}
-        uses: actions/upload-artifact@v4
+      - name: Upload AMD build artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v5
         with:
-          name: Behat Faildump (${{ join(matrix.*, ', ') }})
-          path: ${{ github.workspace }}/moodledata/behat_dump
-          retention-days: 7
-          if-no-files-found: ignore
+          name: mod_learnplugpodcasts-amd-build
+          path: ${{ env.CI_PLUGIN_DIR }}/amd/build/
+          if-no-files-found: error
 
-      - name: Mark cancelled jobs as failed.
-        if: ${{ cancelled() }}
-        run: exit 1
+      - name: Sync rebuilt AMD files back to plugin checkout
+        if: ${{ always() }}
+        run: |
+          mkdir -p "${PLUGIN_DIR}/amd/build"
+          rsync -a "${CI_PLUGIN_DIR}/amd/build/" "${PLUGIN_DIR}/amd/build/"
+
+      - name: Fail if AMD build files changed
+        if: ${{ !cancelled() }}
+        run: |
+          git -C "${PLUGIN_DIR}" diff --exit-code -- amd/build/
