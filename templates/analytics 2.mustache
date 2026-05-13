@@ -1,0 +1,77 @@
+{{!
+@template mod_learnplugpodcasts/analytics
+LearnPlug Podcasts analytics block.
+Example context (json):
+{
+"hasanalyticsrows": true,
+"analytics": {
+"cards": [{"label":"Published episodes","value":"4","sub":"Out of total"}],
+"rows": [{
+"title": "Episode 1",
+"statuslabel": "Published",
+"listeners": "12",
+"listenerengagement": "75%",
+"avglistenedpercent": "68%",
+"completionrate": "50%",
+"totallistened": "01:12:03",
+"duration": "00:12:18",
+"lastactivity": "2026-05-04 11:20"
+}]
+}
+}
+}}
+<section class="lp-analytics">
+<div class="lp-manage-header">
+<h2>{{#str}}analyticstitle, mod_learnplugpodcasts{{/str}}</h2>
+</div>
+<p class="lp-note">{{#str}}analyticssubtitle, mod_learnplugpodcasts{{/str}}</p>
+<div class="lp-analytics-cards">
+{{#analytics.cards}}
+<article class="lp-analytics-card">
+<h3 class="sr-only">{{label}}</h3>
+<p class="lp-analytics-card__label">{{label}}</p>
+<p class="lp-analytics-card__value">{{value}}</p>
+<p class="lp-analytics-card__sub">{{sub}}</p>
+</article>
+{{/analytics.cards}}
+</div>
+{{#hasanalyticsrows}}
+<div class="lp-analytics-table-wrap">
+<table class="lp-analytics-table">
+<thead>
+<tr>
+<th>{{#str}}analytics_episode, mod_learnplugpodcasts{{/str}}</th>
+<th>{{#str}}analytics_status, mod_learnplugpodcasts{{/str}}</th>
+<th>{{#str}}analytics_listeners, mod_learnplugpodcasts{{/str}}</th>
+<th>{{#str}}analytics_engagement, mod_learnplugpodcasts{{/str}}</th>
+<th>{{#str}}analytics_avglistened, mod_learnplugpodcasts{{/str}}</th>
+<th>{{#str}}analytics_completionrate, mod_learnplugpodcasts{{/str}}</th>
+<th>{{#str}}analytics_likes, mod_learnplugpodcasts{{/str}}</th>
+<th>{{#str}}analytics_totallistened, mod_learnplugpodcasts{{/str}}</th>
+<th>{{#str}}analytics_duration, mod_learnplugpodcasts{{/str}}</th>
+<th>{{#str}}analytics_lastactivity, mod_learnplugpodcasts{{/str}}</th>
+</tr>
+</thead>
+<tbody>
+{{#analytics.rows}}
+<tr>
+<td>{{title}}</td>
+<td>{{statuslabel}}</td>
+<td>{{listeners}}</td>
+<td>{{listenerengagement}}</td>
+<td>{{avglistenedpercent}}</td>
+<td>{{completionrate}}</td>
+<td>{{likes}}</td>
+<td>{{totallistened}}</td>
+<td>{{duration}}</td>
+<td>{{lastactivity}}</td>
+</tr>
+{{/analytics.rows}}
+</tbody>
+</table>
+</div>
+{{/hasanalyticsrows}}
+{{^hasanalyticsrows}}
+<div class="lp-empty">{{#str}}noprogress, mod_learnplugpodcasts{{/str}}</div>
+{{/hasanalyticsrows}}
+</section>
