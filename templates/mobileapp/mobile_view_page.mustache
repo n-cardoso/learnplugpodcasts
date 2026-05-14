@@ -1,6 +1,13 @@
 {{!
 @template mod_learnplugpodcasts/mobileapp/mobile_view_page
 Moodle App view page for LearnPlug Podcasts.
+
+@example {
+    "podcastname": "Sample podcast",
+    "episodeslabel": "Episodes",
+    "hasepisodes": false,
+    "emptylabel": "No published episodes are currently available."
+}
 }}
 {{=<% %>=}}
 <div class="lp-mobile-view" style="padding: 0.7rem;">
@@ -17,7 +24,9 @@ Moodle App view page for LearnPlug Podcasts.
         </ion-card-content>
     </ion-card>
 
-    <h2 style="margin: 1rem 0 0.7rem;"><% episodeslabel %></h2>
+    <h2 style="margin: 1rem 0 0.7rem;">
+        <%#episodeslabel%><% episodeslabel %><%/episodeslabel%><%^episodeslabel%>Episodes<%/episodeslabel%>
+    </h2>
 
     <%#hasepisodes%>
     <ion-accordion-group>
