@@ -99,6 +99,7 @@ class mobile {
                 $file->get_filepath(),
                 $file->get_filename()
             )->out(false);
+            $coverimage = self::to_mobile_media_url($coverimage);
             $prefetchfiles[] = [
                 'fileurl' => $coverimage,
                 'filename' => $file->get_filename(),
@@ -126,6 +127,7 @@ class mobile {
                     $imagefile->get_filepath(),
                     $imagefile->get_filename()
                 )->out(false);
+                $imageurl = self::to_mobile_media_url($imageurl);
                 $prefetchfiles[] = [
                     'fileurl' => $imageurl,
                     'filename' => $imagefile->get_filename(),
@@ -145,6 +147,7 @@ class mobile {
                 $audiofile->get_filepath(),
                 $audiofile->get_filename()
             )->out(false);
+            $audiourl = self::to_mobile_media_url($audiourl);
 
             $downloadfile = [
                 'fileurl' => $audiourl,
@@ -159,8 +162,16 @@ class mobile {
             }
 
             $captiontracks = $captionservice->get_caption_tracks($context, (int)$episode->id);
+            foreach ($captiontracks as $index => $track) {
+                $captiontracks[$index]['url'] = self::to_mobile_media_url((string)($track['url'] ?? ''));
+                $captiontracks[$index]['cuesb64'] = self::get_caption_track_cues_b64(
+                    $context,
+                    (int)$episode->id,
+                    (string)($track['filename'] ?? '')
+                );
+            }
             $primarycaption = $captionservice->get_primary_caption_track($context, (int)$episode->id);
-            $primarycaptionurl = (string)($primarycaption['url'] ?? '');
+            $primarycaptionurl = self::to_mobile_media_url((string)($primarycaption['url'] ?? ''));
             $hascaptiontracks = !empty($captiontracks);
             if ($hascaptiontracks) {
                 $first = true;
@@ -249,12 +260,86 @@ class mobile {
     private static function mobile_caption_javascript(): string {
         return <<<'JS'
 (function() {
+    document.addEventListener('play', (event) => {
+        const target = event && event.target ? event.target : null;
+        if (!(target instanceof HTMLAudioElement)) {
+            return;
+        }
+        document.querySelectorAll('audio').forEach((audio) => {
+            if (audio !== target && !audio.paused) {
+                audio.pause();
+            }
+        });
+    }, true);
+
     const asInt = (value, fallback = 0) => {
         const num = parseInt(String(value ?? ''), 10);
         return Number.isFinite(num) ? num : fallback;
     };
 
-    const setupEpisodeCaptions = (container) => {
+    const parseTimestampToSeconds = (raw) => {
+        const text = String(raw || '').trim().replace(',', '.');
+        const match = text.match(/^((\d+):)?(\d{1,2}):(\d{2})(\.\d+)?$/);
+        if (!match) {
+            return NaN;
+        }
+        const hours = Number(match[2] || 0);
+        const minutes = Number(match[3] || 0);
+        const seconds = Number(match[4] || 0);
+        const fraction = Number(match[5] || 0);
+        return (hours * 3600) + (minutes * 60) + seconds + fraction;
+    };
+
+        const parseVtt = (content) => {
+        const text = String(content || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        const blocks = text.split(/\n{2,}/);
+        const cues = [];
+
+        blocks.forEach((block) => {
+            const lines = block.split('\n')
+                .map((line) => line.trim())
+                .filter((line) => line !== '');
+            if (!lines.length) {
+                return;
+            }
+            if (/^WEBVTT/i.test(lines[0]) || /^NOTE/i.test(lines[0])) {
+                return;
+            }
+
+            let timinglineindex = 0;
+            if (!lines[0].includes('-->')) {
+                timinglineindex = 1;
+            }
+            const timingline = lines[timinglineindex] || '';
+            if (!timingline.includes('-->')) {
+                return;
+            }
+
+            const parts = timingline.split('-->');
+            const starttext = String(parts[0] || '').trim().split(/\s+/)[0];
+            const endtext = String(parts[1] || '').trim().split(/\s+/)[0];
+            const start = parseTimestampToSeconds(starttext);
+            const end = parseTimestampToSeconds(endtext);
+            if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+                return;
+            }
+
+            const payload = lines.slice(timinglineindex + 1).join('\n').trim();
+            if (!payload) {
+                return;
+            }
+
+            cues.push({
+                start: start,
+                end: end,
+                text: payload.replace(/<[^>]+>/g, ''),
+            });
+        });
+
+        return cues;
+        };
+
+        const setupEpisodeCaptions = (container) => {
         const audio = container.querySelector('[data-region="lp-mobile-audio"]');
         const live = container.querySelector('[data-region="lp-mobile-caption-live"]');
         const select = container.querySelector('[data-region="lp-mobile-caption-select"]');
@@ -265,8 +350,13 @@ class mobile {
         }
 
         const trackElements = Array.from(audio.querySelectorAll('track[kind="subtitles"]'));
-        let selectedTrack = null;
-        let selectedUrl = String((select && select.value) || audio.dataset.captionUrl || '');
+            let selectedTrack = null;
+            let selectedTrackElement = null;
+            let selectedUrl = String((select && select.value) || audio.dataset.captionUrl || '');
+            let captionCues = [];
+            const optionCueMap = new Map();
+            let captionLoadToken = 0;
+            let captionRenderTimer = 0;
         let lasttime = 0;
         let lasteditted = 0;
         let pendingdelta = 0;
@@ -293,6 +383,8 @@ class mobile {
                 return;
             }
             const position = Math.max(0, Math.floor(Number(audio.currentTime || 0)));
+            setFormValue('cmid', asInt(audio.dataset.cmid, 0));
+            setFormValue('episodeid', asInt(audio.dataset.episodeid, 0));
             setFormValue('positionsecs', position);
             setFormValue('advanceddelta', pendingdelta > 0 ? pendingdelta.toFixed(2) : '0');
             setFormValue('durationsecs', getDuration());
@@ -318,16 +410,73 @@ class mobile {
             }
         };
 
+        const normalizeTrackUrl = (url) => {
+            const raw = String(url || '').trim();
+            if (!raw) {
+                return '';
+            }
+            const value = raw.replace('/pluginfile.php/', '/webservice/pluginfile.php/');
+            const withoutQuery = value.split('?')[0];
+            return withoutQuery.replace(/\/+$/, '');
+        };
+
+        const urlsEquivalent = (a, b) => {
+            const left = normalizeTrackUrl(a);
+            const right = normalizeTrackUrl(b);
+            return !!left && !!right && left === right;
+        };
+
+            const getTrackRuntimeUrl = (trackelement) => {
+                if (!trackelement) {
+                    return '';
+                }
+                return String(trackelement.src || trackelement.getAttribute('src') || '').trim();
+            };
+
+            const decodeBase64Json = (raw) => {
+                const value = String(raw || '').trim();
+                if (!value) {
+                    return [];
+                }
+                try {
+                    const decoded = atob(value);
+                    const parsed = JSON.parse(decoded);
+                    return Array.isArray(parsed) ? parsed : [];
+                } catch (e) {
+                    return [];
+                }
+            };
+
+            const registerOptionCues = () => {
+                if (!select) {
+                    return;
+                }
+                Array.from(select.options).forEach((option) => {
+                    const value = String(option.value || '').trim();
+                    if (!value) {
+                        return;
+                    }
+                    const cues = decodeBase64Json(option.getAttribute('data-cues'));
+                    if (cues.length) {
+                        optionCueMap.set(normalizeTrackUrl(value), cues);
+                    }
+                });
+            };
+
         const findTrackByUrl = (url) => {
             const matchurl = String(url || '').trim();
             if (!matchurl) {
                 return null;
             }
             for (let i = 0; i < trackElements.length; i += 1) {
-                const source = String(trackElements[i].getAttribute('src') || '');
-                if (source === matchurl) {
+                const sourceattr = String(trackElements[i].getAttribute('src') || '');
+                const sourceruntime = getTrackRuntimeUrl(trackElements[i]);
+                if (urlsEquivalent(sourceattr, matchurl) || urlsEquivalent(sourceruntime, matchurl)) {
                     const textTrack = audio.textTracks && audio.textTracks[i] ? audio.textTracks[i] : null;
-                    return textTrack;
+                    return {
+                        textTrack: textTrack,
+                        element: trackElements[i],
+                    };
                 }
             }
             return null;
@@ -342,14 +491,75 @@ class mobile {
             const found = findTrackByUrl(selectedUrl);
             if (found) {
                 disableAllTracks();
-                selectedTrack = found;
+                selectedTrack = found.textTrack;
+                selectedTrackElement = found.element;
                 // "showing" is more reliable than "hidden" for activeCues in iOS webviews.
                 selectedTrack.mode = 'showing';
+            } else {
+                selectedTrack = null;
+                selectedTrackElement = null;
             }
+        };
+
+            const loadCaptionTrack = (url, trackelement = null) => {
+                const trackurl = String(url || '').trim();
+                captionLoadToken += 1;
+                const token = captionLoadToken;
+                const urlkey = normalizeTrackUrl(trackurl);
+                if (urlkey && optionCueMap.has(urlkey)) {
+                    captionCues = optionCueMap.get(urlkey) || [];
+                    renderCue();
+                    return;
+                }
+
+                captionCues = [];
+                renderCue();
+
+            const runtimeurl = getTrackRuntimeUrl(trackelement);
+            const fetchurl = runtimeurl || trackurl;
+            if (!fetchurl) {
+                return;
+            }
+
+            fetch(fetchurl, {credentials: 'include'})
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error('Caption track fetch failed');
+                    }
+                    return response.text();
+                })
+                .then((content) => {
+                    if (token !== captionLoadToken) {
+                        return null;
+                    }
+                    captionCues = parseVtt(content);
+                    renderCue();
+                    return null;
+                })
+                .catch(() => {
+                    if (token !== captionLoadToken) {
+                        return null;
+                    }
+                    captionCues = [];
+                    renderCue();
+                    return null;
+                });
         };
 
         const renderCue = () => {
             if (!live) {
+                return;
+            }
+            if (captionCues.length > 0) {
+                const now = Number(audio.currentTime || 0);
+                const cue = captionCues.find((item) => now >= item.start && now <= item.end);
+                if (!cue || !String(cue.text || '').trim()) {
+                    live.textContent = '';
+                    live.hidden = true;
+                    return;
+                }
+                live.textContent = String(cue.text).trim();
+                live.hidden = false;
                 return;
             }
             if (!selectedTrack || selectedTrack.mode === 'disabled') {
@@ -380,10 +590,13 @@ class mobile {
         const setSelectedTrack = (url) => {
             selectedUrl = String(url || '').trim();
             disableAllTracks();
-            selectedTrack = findTrackByUrl(selectedUrl);
+            const match = findTrackByUrl(selectedUrl);
+            selectedTrack = match ? match.textTrack : null;
+            selectedTrackElement = match ? match.element : null;
             if (selectedTrack) {
                 selectedTrack.mode = 'showing';
             }
+            loadCaptionTrack(selectedUrl, selectedTrackElement);
             renderCue();
         };
 
@@ -410,7 +623,17 @@ class mobile {
         }
 
         audio.addEventListener('timeupdate', renderCue);
-        audio.addEventListener('play', renderCue);
+        audio.addEventListener('play', () => {
+            document.querySelectorAll('[data-region="lp-mobile-audio"]').forEach((otheraudio) => {
+                if (otheraudio !== audio && !otheraudio.paused) {
+                    otheraudio.pause();
+                }
+            });
+            if (!captionRenderTimer) {
+                captionRenderTimer = window.setInterval(renderCue, 250);
+            }
+            renderCue();
+        });
         audio.addEventListener('loadedmetadata', () => {
             if (select && live) {
                 syncSelectedTrack();
@@ -444,15 +667,28 @@ class mobile {
         });
         audio.addEventListener('pause', () => {
             renderCue();
+            if (captionRenderTimer) {
+                window.clearInterval(captionRenderTimer);
+                captionRenderTimer = 0;
+            }
             queueSync('paused');
         });
         audio.addEventListener('ended', () => {
             renderCue();
+            if (captionRenderTimer) {
+                window.clearInterval(captionRenderTimer);
+                captionRenderTimer = 0;
+            }
             pendingdelta += 1;
             queueSync('ended');
         });
 
         if (select && live) {
+            registerOptionCues();
+            if (!selectedUrl && trackElements.length) {
+                const firsttrack = trackElements[0];
+                selectedUrl = String(firsttrack.getAttribute('src') || firsttrack.src || '').trim();
+            }
             setSelectedTrack(selectedUrl);
         }
     };
@@ -462,5 +698,114 @@ class mobile {
     });
 })();
 JS;
+    }
+
+    /**
+     * Builds a Moodle App-safe URL for protected plugin files.
+     *
+     * @param string $url
+     * @return string
+     */
+    private static function to_mobile_media_url(string $url): string {
+        if ($url === '') {
+            return '';
+        }
+        return str_replace('/pluginfile.php/', '/webservice/pluginfile.php/', $url);
+    }
+
+    /**
+     * Encodes parsed cues for a caption track so mobile view can render without extra fetch calls.
+     *
+     * @param context_module $context
+     * @param int $episodeid
+     * @param string $filename
+     * @return string
+     */
+    private static function get_caption_track_cues_b64(
+        context_module $context,
+        int $episodeid,
+        string $filename
+    ): string {
+        if ($filename === '') {
+            return '';
+        }
+        $file = get_file_storage()->get_file(
+            $context->id,
+            'mod_learnplugpodcasts',
+            caption_service::FILEAREA,
+            $episodeid,
+            '/',
+            $filename
+        );
+        if (!$file) {
+            return '';
+        }
+        $payload = json_encode(self::parse_vtt_cues((string)$file->get_content()));
+        if ($payload === false || $payload === '[]') {
+            return '';
+        }
+        return base64_encode($payload);
+    }
+
+    /**
+     * Parses VTT text into cue records for mobile timed rendering.
+     *
+     * @param string $content
+     * @return array
+     */
+    private static function parse_vtt_cues(string $content): array {
+        $text = str_replace(["\r\n", "\r"], "\n", $content);
+        $blocks = preg_split("/\n{2,}/", $text) ?: [];
+        $cues = [];
+        foreach ($blocks as $block) {
+            $lines = array_values(array_filter(array_map('trim', explode("\n", $block)), static function ($line): bool {
+                return $line !== '';
+            }));
+            if (!$lines) {
+                continue;
+            }
+            if (preg_match('/^(WEBVTT|NOTE)/i', (string)$lines[0])) {
+                continue;
+            }
+
+            $timinglineindex = str_contains((string)$lines[0], '-->') ? 0 : 1;
+            if (!isset($lines[$timinglineindex]) || !str_contains((string)$lines[$timinglineindex], '-->')) {
+                continue;
+            }
+            [$rawstart, $rawend] = array_pad(explode('-->', (string)$lines[$timinglineindex], 2), 2, '');
+            $start = self::parse_vtt_timestamp_to_seconds(trim((string)preg_split('/\s+/', trim($rawstart))[0]));
+            $end = self::parse_vtt_timestamp_to_seconds(trim((string)preg_split('/\s+/', trim($rawend))[0]));
+            if ($start === null || $end === null || $end <= $start) {
+                continue;
+            }
+            $payload = trim(strip_tags(implode("\n", array_slice($lines, $timinglineindex + 1))));
+            if ($payload === '') {
+                continue;
+            }
+            $cues[] = [
+                'start' => $start,
+                'end' => $end,
+                'text' => $payload,
+            ];
+        }
+        return $cues;
+    }
+
+    /**
+     * Parses one VTT timestamp into seconds.
+     *
+     * @param string $raw
+     * @return float|null
+     */
+    private static function parse_vtt_timestamp_to_seconds(string $raw): ?float {
+        $text = str_replace(',', '.', trim($raw));
+        if (!preg_match('/^((\d+):)?(\d{1,2}):(\d{2})(\.\d+)?$/', $text, $matches)) {
+            return null;
+        }
+        $hours = (int)($matches[2] ?? 0);
+        $minutes = (int)($matches[3] ?? 0);
+        $seconds = (int)($matches[4] ?? 0);
+        $fraction = isset($matches[5]) ? (float)$matches[5] : 0.0;
+        return ($hours * 3600) + ($minutes * 60) + $seconds + $fraction;
     }
 }

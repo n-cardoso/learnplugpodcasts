@@ -38,19 +38,19 @@ class save_progress extends external_api {
      */
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
-            'cmid' => new external_value(PARAM_INT, 'Course module id'),
-            'episodeid' => new external_value(PARAM_INT, 'Episode id'),
-            'positionsecs' => new external_value(PARAM_INT, 'Playback position in seconds'),
-            'advanceddelta' => new external_value(PARAM_FLOAT, 'Advancing playback delta in seconds'),
-            'durationsecs' => new external_value(PARAM_INT, 'Episode duration in seconds'),
-            'playstate' => new external_value(PARAM_ALPHA, 'Playback state', VALUE_DEFAULT, 'playing'),
+            'cmid' => new external_value(PARAM_INT, 'Course module id', VALUE_OPTIONAL, 0),
+            'episodeid' => new external_value(PARAM_INT, 'Episode id', VALUE_OPTIONAL, 0),
+            'positionsecs' => new external_value(PARAM_INT, 'Playback position in seconds', VALUE_OPTIONAL, 0),
+            'advanceddelta' => new external_value(PARAM_FLOAT, 'Advancing playback delta in seconds', VALUE_OPTIONAL, 0),
+            'durationsecs' => new external_value(PARAM_INT, 'Episode duration in seconds', VALUE_OPTIONAL, 0),
+            'playstate' => new external_value(PARAM_ALPHA, 'Playback state', VALUE_OPTIONAL, 'playing'),
         ]);
     }
 
     /**
      * Execute.
      *
-     * @param int $cmid
+     * @param int $cmid Optional course module id (0 resolves from episode)
      * @param int $episodeid
      * @param int $positionsecs
      * @param float $advanceddelta
@@ -59,11 +59,11 @@ class save_progress extends external_api {
      * @return array
      */
     public static function execute(
-        int $cmid,
-        int $episodeid,
-        int $positionsecs,
-        float $advanceddelta,
-        int $durationsecs,
+        int $cmid = 0,
+        int $episodeid = 0,
+        int $positionsecs = 0,
+        float $advanceddelta = 0,
+        int $durationsecs = 0,
         string $playstate = 'playing'
     ): array {
         global $DB, $USER;
@@ -82,7 +82,31 @@ class save_progress extends external_api {
             'playstate' => $playstate,
         ]);
 
-        $cm = get_coursemodule_from_id('learnplugpodcasts', $params['cmid'], 0, false, MUST_EXIST);
+        if ((int)$params['episodeid'] <= 0) {
+            return [
+                'listenedpercent' => 0.0,
+                'lastpositionsecs' => 0,
+                'completed' => 0,
+            ];
+        }
+
+        $episodeservice = new episode_service();
+        $episode = $episodeservice->get_by_id($params['episodeid']);
+        if (!$episode) {
+            throw new \invalid_parameter_exception(get_string('errornoepisode', 'learnplugpodcasts'));
+        }
+
+        if ((int)$params['cmid'] > 0) {
+            $cm = get_coursemodule_from_id('learnplugpodcasts', $params['cmid'], 0, false, MUST_EXIST);
+        } else {
+            $cm = get_coursemodule_from_instance(
+                'learnplugpodcasts',
+                (int)$episode->podcastid,
+                0,
+                false,
+                MUST_EXIST
+            );
+        }
         $course = get_course($cm->course);
         require_login($course, false, $cm);
 
@@ -91,9 +115,7 @@ class save_progress extends external_api {
         require_capability('mod/learnplugpodcasts:view', $context);
 
         $podcast = $DB->get_record('learnplugpodcasts', ['id' => $cm->instance], '*', MUST_EXIST);
-        $episodeservice = new episode_service();
-        $episode = $episodeservice->get_by_id($params['episodeid']);
-        if (!$episode || (int)$episode->podcastid !== (int)$podcast->id) {
+        if ((int)$episode->podcastid !== (int)$podcast->id) {
             throw new \invalid_parameter_exception(get_string('errornoepisode', 'learnplugpodcasts'));
         }
 

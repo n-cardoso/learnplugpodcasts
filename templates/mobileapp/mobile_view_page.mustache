@@ -9,7 +9,8 @@ Moodle App view page for LearnPlug Podcasts.
             <ion-card-title><% podcastname %></ion-card-title>
         </ion-card-header>
         <%#coverimage%>
-        <img src="<% coverimage %>" alt="<% podcastname %>">
+        <img src="<% coverimage %>" alt="<% podcastname %>"
+            core-external-content component="mod_learnplugpodcasts" componentId="<% cmid %>">
         <%/coverimage%>
         <ion-card-content>
             <%#podcastintrotext%><p style="margin: 0;"><% podcastintrotext %></p><%/podcastintrotext%>
@@ -25,7 +26,8 @@ Moodle App view page for LearnPlug Podcasts.
             <ion-item slot="header" lines="full">
                 <%#imageurl%>
                 <ion-thumbnail slot="start">
-                    <img src="<% imageurl %>" alt="<% title %>">
+                    <img src="<% imageurl %>" alt="<% title %>"
+                        core-external-content component="mod_learnplugpodcasts" componentId="<% cmid %>">
                 </ion-thumbnail>
                 <%/imageurl%>
                 <ion-label>
@@ -39,6 +41,7 @@ Moodle App view page for LearnPlug Podcasts.
                 <%#imageurl%>
                 <div style="position: relative; margin: 0.7rem 0 0.65rem;">
                     <img src="<% imageurl %>" alt="<% title %>"
+                        core-external-content component="mod_learnplugpodcasts" componentId="<% cmid %>"
                         style="display: block; width: 100%; border-radius: 10px; object-fit: cover;">
                 </div>
                 <%/imageurl%>
@@ -46,13 +49,15 @@ Moodle App view page for LearnPlug Podcasts.
 
                 <audio controls preload="metadata" style="display: block; width: 100%; margin-bottom: 0.8rem;"
                     src="<% audiourl %>" data-region="lp-mobile-audio" data-caption-url="<% captiontrackurl %>"
-                    data-cmid="<% cmid %>" data-episodeid="<% id %>" data-lastposition="<% lastpositionsecs %>">
+                    data-cmid="<% cmid %>" data-episodeid="<% id %>" data-lastposition="<% lastpositionsecs %>"
+                    core-external-content component="mod_learnplugpodcasts" componentId="<% cmid %>">
                     <%#captiontracks%>
-                    <track kind="subtitles" src="<% url %>" srclang="<% lang %>" label="<% label %>">
+                    <track kind="subtitles" src="<% url %>" srclang="<% lang %>" label="<% label %>"
+                        core-external-content component="mod_learnplugpodcasts" componentId="<% cmid %>">
                     <%/captiontracks%>
                 </audio>
 
-                <form id="lp-mobile-progress-form-<% id %>" style="display:none;">
+                <form id="lp-mobile-progress-form-<% id %>" name="lp-mobile-progress-form-<% id %>" style="display:none;">
                     <input type="hidden" name="cmid" value="<% cmid %>">
                     <input type="hidden" name="episodeid" value="<% id %>">
                     <input type="hidden" name="positionsecs" value="0">
@@ -62,6 +67,7 @@ Moodle App view page for LearnPlug Podcasts.
                 </form>
                 <ion-button style="display:none;" data-region="lp-mobile-progress-sync"
                     core-site-plugins-call-ws name="mod_learnplugpodcasts_save_progress"
+                    [params]="{cmid: <% cmid %>, episodeid: <% id %>}"
                     form="lp-mobile-progress-form-<% id %>"></ion-button>
 
                 <%#hascaptiontracks%>
@@ -76,13 +82,13 @@ Moodle App view page for LearnPlug Podcasts.
                 <select data-region="lp-mobile-caption-select" style="display: block; width: 100%; margin: 0 0 0.6rem;">
                     <option value=""><% captionofflabel %></option>
                     <%#captiontracks%>
-                    <option value="<% url %>" <%#isselected%>selected<%/isselected%>><% label %></option>
+                    <option value="<% url %>" data-cues="<% cuesb64 %>" <%#isselected%>selected<%/isselected%>><% label %></option>
                     <%/captiontracks%>
                 </select>
                 <%/hascaptiontracks%>
 
                 <%#canlike%>
-                <form id="lp-mobile-like-form-<% id %>" style="display:none;">
+                <form id="lp-mobile-like-form-<% id %>" name="lp-mobile-like-form-<% id %>" style="display:none;">
                     <input type="hidden" name="cmid" value="<% cmid %>">
                     <input type="hidden" name="episodeid" value="<% id %>">
                 </form>
@@ -92,6 +98,7 @@ Moodle App view page for LearnPlug Podcasts.
                     color="<%#userliked%>danger<%/userliked%><%^userliked%>medium<%/userliked%>"
                     core-site-plugins-call-ws
                     name="mod_learnplugpodcasts_toggle_like"
+                    [params]="{cmid: <% cmid %>, episodeid: <% id %>}"
                     form="lp-mobile-like-form-<% id %>"
                     refreshOnSuccess="true"
                     style="margin: 0 0 0.75rem;">

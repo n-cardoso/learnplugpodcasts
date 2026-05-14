@@ -633,9 +633,8 @@
 
 .lp-channel-controls {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
-    flex-wrap: wrap;
     gap: 0.72rem;
     margin-bottom: 0.24rem;
     padding: 0.1rem 0;
@@ -650,17 +649,21 @@
     display: flex;
     align-items: center;
     gap: 0.35rem;
-}
-
-.lp-channel-controls__right {
-    flex: 1 1 240px;
-    min-width: 0;
-    justify-content: flex-end;
     flex-wrap: wrap;
 }
 
+.lp-channel-controls__right {
+    margin-left: auto;
+    justify-content: flex-start;
+}
+
+.lp-channel-captions-row {
+    margin-top: 0.18rem;
+    margin-bottom: 0.1rem;
+}
+
 .lp-caption-picker {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.42rem;
     min-width: 0;
@@ -677,7 +680,7 @@
 
 .lp-caption-picker__select {
     min-width: 0;
-    width: min(210px, 100%);
+    width: min(560px, 100%);
     max-width: 100%;
     border: 1px solid #bccae3;
     background: #fff;
@@ -931,15 +934,22 @@
 
     .lp-channel-controls {
         gap: 0.5rem;
+        justify-content: flex-start;
+        flex-wrap: wrap;
     }
 
     .lp-channel-controls__right {
-        flex: 1 1 100%;
+        margin-left: 0;
         justify-content: flex-start;
     }
 
+    .lp-channel-captions-row {
+        width: 100%;
+    }
+
     .lp-caption-picker {
-        flex: 1 1 100%;
+        display: flex;
+        width: 100%;
     }
 
     .lp-caption-picker__select {
@@ -1024,12 +1034,11 @@
 
     .lp-channel-controls__right {
         width: 100%;
-        justify-content: space-between;
+        justify-content: flex-start;
         gap: 0.3rem;
     }
 
     .lp-caption-picker {
-        order: 3;
-        flex: 1 1 100%;
+        width: 100%;
     }
 }
