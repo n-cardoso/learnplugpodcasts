@@ -539,7 +539,7 @@
     top: 50%;
     transform: translate(-50%, -50%);
     z-index: 3;
-    width: min(86%, calc(100% - 1rem));
+    width: calc(100% - 1rem);
     max-width: 760px;
     padding: 0.42rem 0.72rem;
     border-radius: 10px;
@@ -680,8 +680,8 @@
 
 .lp-caption-picker__select {
     min-width: 0;
-    width: min(560px, 100%);
-    max-width: 100%;
+    width: 100%;
+    max-width: 560px;
     border: 1px solid #bccae3;
     background: #fff;
     color: #1f2b43;
