@@ -38,8 +38,8 @@ class toggle_like extends external_api {
      */
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
-            'cmid' => new external_value(PARAM_INT, 'Course module id', VALUE_DEFAULT, 0),
-            'episodeid' => new external_value(PARAM_INT, 'Episode id'),
+            'cmid' => new external_value(PARAM_INT, 'Course module id', VALUE_OPTIONAL, 0),
+            'episodeid' => new external_value(PARAM_INT, 'Episode id', VALUE_OPTIONAL, 0),
         ]);
     }
 
@@ -50,7 +50,7 @@ class toggle_like extends external_api {
      * @param int $episodeid
      * @return array
      */
-    public static function execute(int $cmid, int $episodeid): array {
+    public static function execute(int $cmid = 0, int $episodeid = 0): array {
         global $DB, $USER;
 
         $wstoken = optional_param('wstoken', '', PARAM_ALPHANUMEXT);
@@ -61,6 +61,13 @@ class toggle_like extends external_api {
             'cmid' => $cmid,
             'episodeid' => $episodeid,
         ]);
+
+        if ((int)$params['episodeid'] <= 0) {
+            return [
+                'liked' => 0,
+                'likecount' => 0,
+            ];
+        }
 
         $episode = (new episode_service())->get_by_id($params['episodeid']);
         if (!$episode) {

@@ -129,6 +129,14 @@ data-last-position="{{featuredepisode.lastpositionsecs}}">
 <button type="button" class="lp-icon-btn" data-action="seek-forward" aria-label="Forward 10 seconds">10↻</button>
 </div>
 <div class="lp-channel-controls__right">
+<button type="button" class="lp-icon-btn" data-action="speed-toggle" aria-label="Playback speed">×1</button>
+<button type="button"
+class="lp-icon-btn"
+data-action="toggle-playlist"
+aria-expanded="false"
+aria-controls="lp-channel-playlist">
+☰
+</button>
 {{#canlike}}
 <button type="button"
 class="lp-icon-btn lp-like-btn {{#featuredepisode.userliked}}is-liked{{/featuredepisode.userliked}}"
@@ -142,6 +150,9 @@ aria-label="{{#str}}likeepisode, mod_learnplugpodcasts{{/str}}">
 <span class="lp-like-btn__count" data-region="lp-like-count">{{featuredepisode.likecount}}</span>
 </button>
 {{/canlike}}
+</div>
+</div>
+<div class="lp-channel-captions-row">
 <label class="lp-caption-picker"
 data-region="lp-caption-select-wrap"
 {{^featuredepisode.hascaptiontracks}}hidden{{/featuredepisode.hascaptiontracks}}>
@@ -155,15 +166,6 @@ data-region="lp-caption-select-wrap"
 {{/featuredepisode.captiontracks}}
 </select>
 </label>
-<button type="button" class="lp-icon-btn" data-action="speed-toggle" aria-label="Playback speed">×1</button>
-<button type="button"
-class="lp-icon-btn"
-data-action="toggle-playlist"
-aria-expanded="false"
-aria-controls="lp-channel-playlist">
-☰
-</button>
-</div>
 </div>
 <div class="lp-wave" data-region="lp-wave" aria-hidden="true">
 <span></span><span></span><span></span><span></span><span></span>

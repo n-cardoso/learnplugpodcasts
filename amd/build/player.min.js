@@ -480,7 +480,14 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
         };
 
         const bindCoreAudioEvents = () => {
-            audio.addEventListener('play', () => updatePlayButton(root, false));
+            audio.addEventListener('play', () => {
+                document.querySelectorAll('audio.lp-audio').forEach((other) => {
+                    if (other !== audio && !other.paused) {
+                        other.pause();
+                    }
+                });
+                updatePlayButton(root, false);
+            });
             audio.addEventListener('pause', () => updatePlayButton(root, true));
             audio.addEventListener('ended', () => updatePlayButton(root, true));
             audio.addEventListener('timeupdate', () => {
@@ -630,6 +637,21 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
     };
 
     const init = () => {
+        if (!window.__lpSingleAudioBound) {
+            window.__lpSingleAudioBound = true;
+            document.addEventListener('play', (event) => {
+                const target = event && event.target ? event.target : null;
+                if (!(target instanceof HTMLMediaElement)) {
+                    return;
+                }
+                document.querySelectorAll('audio, video').forEach((media) => {
+                    if (media !== target && !media.paused) {
+                        media.pause();
+                    }
+                });
+            }, true);
+        }
+
         document.querySelectorAll('audio.lp-audio').forEach((player) => {
             wireRestore(player);
             wireWave(player);

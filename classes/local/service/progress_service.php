@@ -71,8 +71,16 @@ class progress_service {
         $existing = $this->progressrepo->get_episode_user((int)$episode->id, $userid);
         $listenedsecs = (float)($existing->listenedsecs ?? 0) + $delta;
 
-        if ($durationsecs > 0) {
-            $listenedpercent = min(100.0, ($listenedsecs / $durationsecs) * 100.0);
+        // Use a resilient duration source to avoid resetting listened% to 0 on
+        // browsers/webviews that temporarily report unknown/invalid duration.
+        $storedduration = max(0, (int)($episode->durationsecs ?? 0));
+        $effectiveduration = $durationsecs > 0 ? $durationsecs : $storedduration;
+        if ($effectiveduration <= 0) {
+            $effectiveduration = max($positionsecs, (int)ceil($listenedsecs));
+        }
+
+        if ($effectiveduration > 0) {
+            $listenedpercent = min(100.0, ($listenedsecs / $effectiveduration) * 100.0);
         } else {
             $listenedpercent = 0.0;
         }
