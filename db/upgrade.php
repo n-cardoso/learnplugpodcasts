@@ -256,26 +256,38 @@ function xmldb_learnplugpodcasts_upgrade($oldversion): bool {
                 'mod_learnplugpodcasts_save_progress',
                 'mod_learnplugpodcasts_toggle_like',
             ];
+
+            $functionsbyname = $DB->get_records_list(
+                'external_functions',
+                'name',
+                $functionnames,
+                '',
+                'id,name'
+            );
+
+            [$insql, $inparams] = $DB->get_in_or_equal($functionnames, SQL_PARAMS_NAMED);
+            $inparams['serviceid'] = (int)$mobileservice->id;
+            $existingrecords = $DB->get_records_select(
+                'external_services_functions',
+                "externalserviceid = :serviceid AND functionname {$insql}",
+                $inparams,
+                '',
+                'id,functionname'
+            );
+            $existingnames = [];
+            foreach ($existingrecords as $record) {
+                $existingnames[$record->functionname] = true;
+            }
+
             foreach ($functionnames as $functionname) {
-                $function = $DB->get_record(
-                    'external_functions',
-                    ['name' => $functionname],
-                    'id',
-                    IGNORE_MISSING
-                );
-                if (!$function) {
+                if (empty($functionsbyname[$functionname]) || !empty($existingnames[$functionname])) {
                     continue;
                 }
-                $exists = $DB->record_exists(
-                    'external_services_functions',
-                    ['externalserviceid' => (int)$mobileservice->id, 'functionname' => $functionname]
-                );
-                if (!$exists) {
-                    $DB->insert_record('external_services_functions', (object)[
-                        'externalserviceid' => (int)$mobileservice->id,
-                        'functionname' => $functionname,
-                    ]);
-                }
+
+                $DB->insert_record('external_services_functions', (object) [
+                    'externalserviceid' => (int)$mobileservice->id,
+                    'functionname' => $functionname,
+                ]);
             }
         }
 

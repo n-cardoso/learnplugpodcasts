@@ -112,10 +112,20 @@ if ($canviewreports) {
             get_string('completionstatus', 'learnplugpodcasts'),
             get_string('lastaccess'),
         ];
+
+        $episodeids = [];
         foreach ($records as $record) {
-            $episode = $DB->get_record('learnplugpodcasts_eps', ['id' => $record->episodeid], 'id,title', MUST_EXIST);
+            $episodeids[] = (int)$record->episodeid;
+        }
+        $episodes = [];
+        if (!empty($episodeids)) {
+            $episodes = $DB->get_records_list('learnplugpodcasts_eps', 'id', array_unique($episodeids), '', 'id,title');
+        }
+
+        foreach ($records as $record) {
+            $episode = $episodes[(int)$record->episodeid] ?? null;
             $table->data[] = [
-                format_string($episode->title),
+                format_string($episode->title ?? get_string('notfoundepisode', 'learnplugpodcasts')),
                 round((float)$record->listenedpercent, 2) . '%',
                 !empty($record->completed) ?
                     get_string('completionstatus_complete', 'learnplugpodcasts') :

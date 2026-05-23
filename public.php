@@ -78,7 +78,6 @@ $PAGE->set_context($context);
 $PAGE->set_pagelayout('base');
 $PAGE->set_title(format_string($podcast->name));
 $PAGE->set_heading(format_string($podcast->name));
-$PAGE->requires->css('/mod/learnplugpodcasts/styles.css');
 
 $coverurl = '';
 $fs = get_file_storage();

@@ -60,7 +60,6 @@ $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_activity_record($podcast);
 $PAGE->set_cm($cm, $course);
 $PAGE->set_pagelayout('incourse');
-$PAGE->requires->css('/mod/learnplugpodcasts/styles.css');
 if (isset($PAGE->activityheader) && method_exists($PAGE->activityheader, 'set_description')) {
     // Keep podcast description only in our custom player header to avoid duplicate intro blocks.
     $PAGE->activityheader->set_description('');

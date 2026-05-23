@@ -75,28 +75,21 @@ $string['cap:view'] = 'View LearnPlug Podcasts activity';
 $string['cap:viewpublic'] = 'View public LearnPlug Podcasts pages';
 $string['cap:viewreports'] = 'View LearnPlug Podcasts reports';
 $string['captionfiles'] = 'Caption tracks (.vtt)';
-$string['captionfiles_help'] =
-    'Automatic language detection is based on the caption filename. '
-    . 'Upload one .vtt file per language using names like episode.en.vtt, '
-    . 'episode.pt.vtt, or episode.fr-ca.vtt.';
+$string['captionfiles_help'] = 'Automatic language detection is based on the caption filename. Upload one .vtt file per language using names like episode.en.vtt, episode.pt.vtt, or episode.fr-ca.vtt.';
 $string['captionlang_unknown'] = 'Unknown language';
-$string['captionnamingguide'] =
-    'Language is detected automatically from the filename suffix. '
-    . 'Use <code>.en.vtt</code>, <code>.pt.vtt</code>, <code>.fr-ca.vtt</code>, etc.';
+$string['captionnamingguide'] = 'Language is detected automatically from the filename suffix. Use <code>.en.vtt</code>, <code>.pt.vtt</code>, <code>.fr-ca.vtt</code>, etc.';
 $string['captiontrackoff'] = 'Off';
 $string['captiontrackselect'] = 'Captions';
 $string['category'] = 'Category';
 $string['completionepisodecount'] = 'Completion required episode count';
 $string['completionlistenmode'] = 'Completion by listening';
-$string['completionlistenmode_channelrecommended'] =
-    'Channel completion: at least N episodes listened at X% each (recommended)';
+$string['completionlistenmode_channelrecommended'] = 'Channel completion: at least N episodes listened at X% each (recommended)';
 $string['completionlistenmode_episodecount'] = 'Listen to at least N episodes';
 $string['completionlistenmode_none'] = 'No listening completion rule';
 $string['completionlistenmode_percent'] = 'Listen to at least X% of one episode';
 $string['completionlistenmode_started'] = 'Any playback started';
 $string['completionlistenpercent'] = 'Completion listen percent';
-$string['completionrule_channelrecommended'] =
-    'Listen to at least {$a->count} episodes with at least {$a->percent}% listened on each.';
+$string['completionrule_channelrecommended'] = 'Listen to at least {$a->count} episodes with at least {$a->percent}% listened on each.';
 $string['completionstatus'] = 'Completion status';
 $string['completionstatus_complete'] = 'Completed';
 $string['completionstatus_incomplete'] = 'Not completed';
@@ -106,11 +99,9 @@ $string['coverimage'] = 'Cover image';
 $string['defaultcompletionepisodecount'] = 'Default completion episode count';
 $string['defaultcompletionepisodecount_desc'] = 'Recommended: 3. Number of episodes required for channel completion mode.';
 $string['defaultcompletionmode'] = 'Default completion mode';
-$string['defaultcompletionmode_desc'] =
-    'Default listening completion mode for new activities. Recommended: channel completion mode.';
+$string['defaultcompletionmode_desc'] = 'Default listening completion mode for new activities. Recommended: channel completion mode.';
 $string['defaultcompletionpercent'] = 'Default completion percent';
-$string['defaultcompletionpercent_desc'] =
-    'Recommended: 70. Minimum listen percent per episode for completion rules that use percent.';
+$string['defaultcompletionpercent_desc'] = 'Recommended: 70. Minimum listen percent per episode for completion rules that use percent.';
 $string['defaultepisodesperpage'] = 'Default episodes per page';
 $string['defaultepisodesperpage_desc'] = 'Default pagination size when creating a new activity.';
 $string['defaultnotifynewepisodes'] = 'Default new episode notifications';
@@ -132,8 +123,7 @@ $string['editepisode'] = 'Edit episode';
 $string['email'] = 'Contact email';
 $string['emptypublicdescription'] = 'No public description is available for this podcast yet.';
 $string['enableepisodenotifications'] = 'Enable episode notifications';
-$string['enableepisodenotifications_desc'] =
-    'Allow podcast activities to notify enrolled learners when new episodes are published.';
+$string['enableepisodenotifications_desc'] = 'Allow podcast activities to notify enrolled learners when new episodes are published.';
 $string['enablepublicpages'] = 'Enable public podcast pages';
 $string['enablepublicpages_desc'] = 'Allow plugin instances to expose public landing and episode pages.';
 $string['enablepublicrss'] = 'Enable public RSS feeds';
@@ -192,8 +182,7 @@ $string['learnplugpodcastsname'] = 'Podcast series name';
 $string['likeepisode'] = 'Like episode';
 $string['likescount'] = '{$a} likes';
 $string['listenedprogress'] = 'Listened: {$a}%';
-$string['manageepisodeshelp'] =
-    'Create episodes, upload media, publish content, and maintain ordering for learners and public feed delivery.';
+$string['manageepisodeshelp'] = 'Create episodes, upload media, publish content, and maintain ordering for learners and public feed delivery.';
 $string['managetitle'] = 'Manage episodes';
 $string['maxuploadnote'] = 'Max episode upload size note';
 $string['maxuploadnote_desc'] = 'Optional guidance displayed to teachers about recommended upload limits.';
@@ -211,12 +200,10 @@ $string['offlineavailable'] = 'Available offline';
 $string['offlinelisteninghint'] = 'Offline listening: download episodes for commuting or limited data access.';
 $string['pluginadministration'] = 'LearnPlug Podcasts administration';
 $string['pluginname'] = 'LearnPlug Podcasts';
-$string['privacy:metadata'] =
-    'The LearnPlug Podcasts activity stores learner listening progress and teacher-authored podcast data.';
+$string['privacy:metadata'] = 'The LearnPlug Podcasts activity stores learner listening progress and teacher-authored podcast data.';
 $string['privacy:metadata:coremessage'] = 'The plugin can send new-episode notifications using Moodle messaging.';
 $string['privacy:metadata:learnplugpodcasts'] = 'Stores podcast activity settings including ownership metadata.';
-$string['privacy:metadata:learnplugpodcasts:owneruserid'] =
-    'The user ID of the teacher recorded as podcast owner.';
+$string['privacy:metadata:learnplugpodcasts:owneruserid'] = 'The user ID of the teacher recorded as podcast owner.';
 $string['privacy:metadata:learnplugpodcasts_like'] = 'Stores learner episode likes.';
 $string['privacy:metadata:learnplugpodcasts_like:episodeid'] = 'The liked episode ID.';
 $string['privacy:metadata:learnplugpodcasts_like:podcastid'] = 'The podcast series ID.';

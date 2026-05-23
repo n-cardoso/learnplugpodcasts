@@ -118,7 +118,6 @@ $PAGE->set_context($context);
 $PAGE->set_pagelayout('base');
 $PAGE->set_title(format_string($episode->title));
 $PAGE->set_heading(format_string($podcast->name));
-$PAGE->requires->css('/mod/learnplugpodcasts/styles.css');
 
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('mod_learnplugpodcasts/public_episode', [

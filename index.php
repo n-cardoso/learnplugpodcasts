@@ -38,6 +38,25 @@ $PAGE->set_title(get_string('modulenameplural', 'learnplugpodcasts'));
 $PAGE->set_heading(format_string($course->fullname));
 
 $instances = get_all_instances_in_course('learnplugpodcasts', $course);
+$instanceids = [];
+foreach ($instances as $instance) {
+    $instanceids[] = (int)$instance->id;
+}
+
+$episodecounts = [];
+if (!empty($instanceids)) {
+    [$insql, $inparams] = $DB->get_in_or_equal($instanceids, SQL_PARAMS_NAMED);
+    $sql = "SELECT podcastid, COUNT(1) AS episodecount
+              FROM {learnplugpodcasts_eps}
+             WHERE podcastid {$insql}
+          GROUP BY podcastid";
+    $rows = $DB->get_records_sql($sql, $inparams);
+    foreach ($rows as $row) {
+        $episodecounts[(int)$row->podcastid] = (int)$row->episodecount;
+    }
+}
+
+$publicpagesenabled = !empty(get_config('mod_learnplugpodcasts', 'enablepublicpages'));
 
 $table = new html_table();
 $table->head = [
@@ -48,9 +67,9 @@ $table->head = [
 $table->data = [];
 
 foreach ($instances as $instance) {
-    $episodes = $DB->count_records('learnplugpodcasts_eps', ['podcastid' => $instance->id]);
+    $episodes = $episodecounts[(int)$instance->id] ?? 0;
     $publicurl = '';
-    if (!empty($instance->publicenabled) && !empty(get_config('mod_learnplugpodcasts', 'enablepublicpages'))) {
+    if (!empty($instance->publicenabled) && $publicpagesenabled) {
         $publicurl = html_writer::link(
             new moodle_url('/mod/learnplugpodcasts/public.php', ['id' => $instance->coursemodule]),
             get_string('publicurl', 'learnplugpodcasts')

@@ -1,41 +1,61 @@
 {{!
-@template mod_learnplugpodcasts/channel_player
-Learner channel player with featured episode and playlist.
-Example context (json):
-{
-"name": "AI Podcast",
-"subtitle": "Learning series",
-"authorname": "Teacher Name",
-"intro": "<p>Podcast intro</p>",
-"coverimage": "https://example.com/cover.jpg",
-"searchplaceholder": "Search episodes",
-"sortnewest": true,
-"sortoldest": false,
-"showsearch": true,
-"showtranscripts": true,
-"featuredepisode": {
-"id": 1,
-"title": "Episode title",
-"episodeindex": 1,
-"descriptionplain": "Episode description",
-"duration": "12:18",
-"audio": "https://example.com/audio.mp3",
-"audiotype": "audio/mpeg",
-"image": "https://example.com/episode.jpg",
-"lastpositionsecs": 0,
-"listenedpercent": 0,
-"iscompleted": false,
-"captiontrackurl": "",
-"captiontracklang": "",
-"captiontracksjson": "[]",
-"hascaptiontracks": false,
-"captiontracks": [],
-"transcripttext": "",
-"transcriptfileurl": "",
-"externalurl": ""
-},
-"episodes": []
-}
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+    @template mod_learnplugpodcasts/channel_player
+    @package mod_learnplugpodcasts
+    @copyright 2026 LearnPlug
+    @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+    Learner channel player with featured episode and playlist.
+
+    Example context (json):
+    {
+        "name": "AI Podcast",
+        "subtitle": "Learning series",
+        "authorname": "Teacher Name",
+        "intro": "<p>Podcast intro</p>",
+        "coverimage": "https://example.com/cover.jpg",
+        "searchplaceholder": "Search episodes",
+        "sortnewest": true,
+        "sortoldest": false,
+        "showsearch": true,
+        "showtranscripts": true,
+        "featuredepisode": {
+            "id": 1,
+            "title": "Episode title",
+            "episodeindex": 1,
+            "descriptionplain": "Episode description",
+            "duration": "12:18",
+            "audio": "https://example.com/audio.mp3",
+            "audiotype": "audio/mpeg",
+            "image": "https://example.com/episode.jpg",
+            "lastpositionsecs": 0,
+            "listenedpercent": 0,
+            "iscompleted": false,
+            "captiontrackurl": "",
+            "captiontracklang": "",
+            "captiontracksjson": "[]",
+            "hascaptiontracks": false,
+            "captiontracks": [],
+            "transcripttext": "",
+            "transcriptfileurl": "",
+            "externalurl": ""
+        },
+        "episodes": []
+    }
 }}
 <section class="lp-channel-player" data-region="lp-channel-player">
 <div class="lp-channel-podcast-meta">
