@@ -1,3 +1,53 @@
+name: Moodle Plugin CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  COMPOSER_PROCESS_TIMEOUT: 0
+  COMPOSER_NO_INTERACTION: 1
+  COMPOSER_NO_AUDIT: 1
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    name: PHP 8.2 • mariadb
+
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_CHARACTER_SET_SERVER: utf8mb4
+          MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v5
+        with:
+          path: plugin
+
+      - name: Detect source plugin directory
+        run: |
+          if [ -f "plugin/mod/learnplugpodcasts/version.php" ]; then
+            echo "PLUGIN_DIR=plugin/mod/learnplugpodcasts" >> "$GITHUB_ENV"
+          elif [ -f "plugin/version.php" ]; then
+            echo "PLUGIN_DIR=plugin" >> "$GITHUB_ENV"
+          else
+            echo "Could not detect source plugin directory." >&2
+            ls -la plugin
             exit 1
           fi
           echo "MOODLE_DIR=moodle" >> "$GITHUB_ENV"
