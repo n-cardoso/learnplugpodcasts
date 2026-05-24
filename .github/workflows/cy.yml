@@ -1,50 +1,3 @@
-name: Moodle Plugin CI
-
-on:
-  push:
-  pull_request:
-  workflow_dispatch:
-
-env:
-  COMPOSER_PROCESS_TIMEOUT: 0
-  COMPOSER_NO_INTERACTION: 1
-  COMPOSER_NO_AUDIT: 1
-
-jobs:
-  test:
-    runs-on: ubuntu-22.04
-    name: PHP 8.2 • mariadb
-
-    services:
-      mariadb:
-        image: mariadb:10.11
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_CHARACTER_SET_SERVER: utf8mb4
-          MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v4
-        with:
-          path: plugin
-
-      - name: Detect source plugin directory
-        run: |
-          if [ -f "plugin/mod/learnplugpodcasts/version.php" ]; then
-            echo "PLUGIN_DIR=plugin/mod/learnplugpodcasts" >> "$GITHUB_ENV"
-          elif [ -f "plugin/version.php" ]; then
-            echo "PLUGIN_DIR=plugin" >> "$GITHUB_ENV"
-          else
-            echo "Could not detect source plugin directory." >&2
-            ls -la plugin
             exit 1
           fi
           echo "MOODLE_DIR=moodle" >> "$GITHUB_ENV"
@@ -122,23 +75,78 @@ jobs:
       - name: Grunt
         id: grunt
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci grunt --moodle "./${MOODLE_DIR}" --max-lint-warnings 0 "./${CI_PLUGIN_DIR}" || true
+        continue-on-error: true
+        run: moodle-plugin-ci grunt --moodle "./${MOODLE_DIR}" --max-lint-warnings 0 "./${CI_PLUGIN_DIR}"
 
       - name: Upload AMD build artifacts
-        if: ${{ !cancelled() }}
+        if: ${{ always() && !cancelled() }}
         uses: actions/upload-artifact@v5
         with:
           name: mod_learnplugpodcasts-amd-build
           path: ${{ env.CI_PLUGIN_DIR }}/amd/build/
-          if-no-files-found: ignore
+          if-no-files-found: error
 
       - name: Sync rebuilt AMD files back to plugin checkout
-        if: ${{ !cancelled() }}
+        if: ${{ always() && !cancelled() }}
         run: |
           mkdir -p "${PLUGIN_DIR}/amd/build"
           rsync -a "${CI_PLUGIN_DIR}/amd/build/" "${PLUGIN_DIR}/amd/build/"
 
-      - name: Fail if AMD build files changed
+      - name: Detect AMD build drift
+        id: amd_diff
+        if: ${{ always() && !cancelled() }}
+        run: |
+          REL_PLUGIN_DIR="${PLUGIN_DIR#plugin/}"
+          if [ -z "${REL_PLUGIN_DIR}" ] || [ "${REL_PLUGIN_DIR}" = "plugin" ]; then
+            BUILD_DIR="amd/build/"
+          else
+            BUILD_DIR="${REL_PLUGIN_DIR}/amd/build/"
+          fi
+
+          if git -C plugin diff --quiet -- "${BUILD_DIR}"; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No AMD build drift detected."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "AMD build drift detected."
+          fi
+
+      - name: Auto-commit rebuilt AMD files (push/workflow_dispatch)
+        if: ${{ always() && !cancelled() && steps.amd_diff.outputs.changed == 'true' && github.event_name != 'pull_request' }}
+        run: |
+          REL_PLUGIN_DIR="${PLUGIN_DIR#plugin/}"
+          if [ -z "${REL_PLUGIN_DIR}" ] || [ "${REL_PLUGIN_DIR}" = "plugin" ]; then
+            BUILD_DIR="amd/build/"
+          else
+            BUILD_DIR="${REL_PLUGIN_DIR}/amd/build/"
+          fi
+
+          git -C plugin config user.name "github-actions[bot]"
+          git -C plugin config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C plugin add "${BUILD_DIR}"
+
+          if git -C plugin diff --cached --quiet; then
+            echo "No staged AMD changes to commit."
+            exit 0
+          fi
+
+          git -C plugin commit -m "chore: rebuild AMD artifacts for mod_learnplugpodcasts"
+          BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          git -C plugin push origin "HEAD:${BRANCH}"
+
+      - name: Fail PR when AMD build drift exists
+        if: ${{ always() && !cancelled() && steps.amd_diff.outputs.changed == 'true' && github.event_name == 'pull_request' }}
+        run: |
+          echo "AMD build artifacts are out of sync. Please commit rebuilt amd/build files."
+          exit 1
+
+      - name: Final AMD drift guard
         if: ${{ !cancelled() }}
         run: |
-          git -C "${PLUGIN_DIR}" diff --exit-code -- amd/build/
+          REL_PLUGIN_DIR="${PLUGIN_DIR#plugin/}"
+          if [ -z "${REL_PLUGIN_DIR}" ] || [ "${REL_PLUGIN_DIR}" = "plugin" ]; then
+            BUILD_DIR="amd/build/"
+          else
+            BUILD_DIR="${REL_PLUGIN_DIR}/amd/build/"
+          fi
+          git -C plugin diff --exit-code -- "${BUILD_DIR}"
