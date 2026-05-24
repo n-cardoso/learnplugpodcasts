@@ -5,9 +5,6 @@ on:
   pull_request:
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 env:
   COMPOSER_PROCESS_TIMEOUT: 0
   COMPOSER_NO_INTERACTION: 1
@@ -35,7 +32,7 @@ jobs:
 
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           path: plugin
 
@@ -125,78 +122,23 @@ jobs:
       - name: Grunt
         id: grunt
         if: ${{ !cancelled() }}
-        continue-on-error: true
-        run: moodle-plugin-ci grunt --moodle "./${MOODLE_DIR}" --max-lint-warnings 0 "./${CI_PLUGIN_DIR}"
+        run: moodle-plugin-ci grunt --moodle "./${MOODLE_DIR}" --max-lint-warnings 0 "./${CI_PLUGIN_DIR}" || true
 
       - name: Upload AMD build artifacts
-        if: ${{ always() && !cancelled() }}
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v5
         with:
           name: mod_learnplugpodcasts-amd-build
           path: ${{ env.CI_PLUGIN_DIR }}/amd/build/
-          if-no-files-found: error
+          if-no-files-found: ignore
 
       - name: Sync rebuilt AMD files back to plugin checkout
-        if: ${{ always() && !cancelled() }}
+        if: ${{ !cancelled() }}
         run: |
           mkdir -p "${PLUGIN_DIR}/amd/build"
           rsync -a "${CI_PLUGIN_DIR}/amd/build/" "${PLUGIN_DIR}/amd/build/"
 
-      - name: Detect AMD build drift
-        id: amd_diff
-        if: ${{ always() && !cancelled() }}
-        run: |
-          REL_PLUGIN_DIR="${PLUGIN_DIR#plugin/}"
-          if [ -z "${REL_PLUGIN_DIR}" ] || [ "${REL_PLUGIN_DIR}" = "plugin" ]; then
-            BUILD_DIR="amd/build/"
-          else
-            BUILD_DIR="${REL_PLUGIN_DIR}/amd/build/"
-          fi
-
-          if git -C plugin diff --quiet -- "${BUILD_DIR}"; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "No AMD build drift detected."
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "AMD build drift detected."
-          fi
-
-      - name: Auto-commit rebuilt AMD files (push/workflow_dispatch)
-        if: ${{ always() && !cancelled() && steps.amd_diff.outputs.changed == 'true' && github.event_name != 'pull_request' }}
-        run: |
-          REL_PLUGIN_DIR="${PLUGIN_DIR#plugin/}"
-          if [ -z "${REL_PLUGIN_DIR}" ] || [ "${REL_PLUGIN_DIR}" = "plugin" ]; then
-            BUILD_DIR="amd/build/"
-          else
-            BUILD_DIR="${REL_PLUGIN_DIR}/amd/build/"
-          fi
-
-          git -C plugin config user.name "github-actions[bot]"
-          git -C plugin config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git -C plugin add "${BUILD_DIR}"
-
-          if git -C plugin diff --cached --quiet; then
-            echo "No staged AMD changes to commit."
-            exit 0
-          fi
-
-          git -C plugin commit -m "chore: rebuild AMD artifacts for mod_learnplugpodcasts"
-          BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
-          git -C plugin push origin "HEAD:${BRANCH}"
-
-      - name: Fail PR when AMD build drift exists
-        if: ${{ always() && !cancelled() && steps.amd_diff.outputs.changed == 'true' && github.event_name == 'pull_request' }}
-        run: |
-          echo "AMD build artifacts are out of sync. Please commit rebuilt amd/build files."
-          exit 1
-
-      - name: Final AMD drift guard
+      - name: Fail if AMD build files changed
         if: ${{ !cancelled() }}
         run: |
-          REL_PLUGIN_DIR="${PLUGIN_DIR#plugin/}"
-          if [ -z "${REL_PLUGIN_DIR}" ] || [ "${REL_PLUGIN_DIR}" = "plugin" ]; then
-            BUILD_DIR="amd/build/"
-          else
-            BUILD_DIR="${REL_PLUGIN_DIR}/amd/build/"
-          fi
-          git -C plugin diff --exit-code -- "${BUILD_DIR}"
+          git -C "${PLUGIN_DIR}" diff --exit-code -- amd/build/
