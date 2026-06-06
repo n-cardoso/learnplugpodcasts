@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_learnplugpodcasts';
-$plugin->version = 2026060603;
+$plugin->version = 2026060604;
 $plugin->requires = 2024100700;
-$plugin->release = '1.0.3 Stable (Build: 2026060603)';
+$plugin->release = '1.0.3 Stable (Build: 2026060604)';
 $plugin->maturity = MATURITY_STABLE;
