@@ -56,7 +56,7 @@ if (learnplugpodcasts_has_grading_enabled($podcast)) {
     learnplugpodcasts_update_grades($podcast);
 }
 
-$clear_grades = static function(array $userids) use ($podcast): void {
+$cleargrades = static function (array $userids) use ($podcast): void {
     if (!learnplugpodcasts_has_grading_enabled($podcast) || empty($userids)) {
         return;
     }
@@ -103,7 +103,7 @@ if ($action !== '') {
 
         $userids = $progressrepo->get_podcast_userids((int)$podcast->id);
         $progressrepo->reset_podcast_progress((int)$podcast->id);
-        $clear_grades($userids);
+        $cleargrades($userids);
         redirect($baseurl, get_string('resetprogressdoneall', 'learnplugpodcasts'));
     }
 
@@ -128,7 +128,7 @@ if ($action !== '') {
         }
 
         $progressrepo->reset_user_progress((int)$podcast->id, $userid);
-        $clear_grades([$userid]);
+        $cleargrades([$userid]);
         redirect($baseurl, get_string('resetprogressdoneuser', 'learnplugpodcasts', fullname($targetuser)));
     }
 }

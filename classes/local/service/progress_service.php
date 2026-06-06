@@ -49,6 +49,7 @@ class progress_service {
      * @param float $advanceddelta
      * @param int $durationsecs
      * @param string $state
+     * @param array $playedranges
      * @return \stdClass
      */
     public function save_progress(

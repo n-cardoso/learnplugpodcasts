@@ -1,7 +1,7 @@
 # LearnPlug Podcasts Feature Report
 
-Version: `1.0.2 Stable`  
-Build: `2026060602`
+Version: `1.0.3 Stable`  
+Build: `2026060603`
 
 ## Summary
 
