@@ -68,6 +68,16 @@ class provider implements
             'timecreated' => 'privacy:metadata:learnplugpodcasts_like:timecreated',
         ], 'privacy:metadata:learnplugpodcasts_like');
 
+        $collection->add_database_table('learnplugpodcasts_zone', [
+            'userid' => 'privacy:metadata:learnplugpodcasts_zone:userid',
+            'podcastid' => 'privacy:metadata:learnplugpodcasts_zone:podcastid',
+            'episodeid' => 'privacy:metadata:learnplugpodcasts_zone:episodeid',
+            'bucketstart' => 'privacy:metadata:learnplugpodcasts_zone:bucketstart',
+            'listenedsecs' => 'privacy:metadata:learnplugpodcasts_zone:listenedsecs',
+            'timemodified' => 'privacy:metadata:learnplugpodcasts_zone:timemodified',
+            'timecreated' => 'privacy:metadata:learnplugpodcasts_zone:timecreated',
+        ], 'privacy:metadata:learnplugpodcasts_zone');
+
         $collection->add_subsystem_link(
             'core_message',
             [],
@@ -125,6 +135,19 @@ class provider implements
                        JOIN {learnplugpodcasts_like} l ON l.podcastid = lp.id
                       WHERE l.userid = :userid";
         $contextlist->add_from_sql($sqllikes, [
+            'contextmodule' => CONTEXT_MODULE,
+            'modname' => 'learnplugpodcasts',
+            'userid' => $userid,
+        ]);
+
+        $sqlzones = "SELECT DISTINCT ctx.id
+                       FROM {context} ctx
+                       JOIN {course_modules} cm ON cm.id = ctx.instanceid AND ctx.contextlevel = :contextmodule
+                       JOIN {modules} m ON m.id = cm.module AND m.name = :modname
+                       JOIN {learnplugpodcasts} lp ON lp.id = cm.instance
+                       JOIN {learnplugpodcasts_zone} z ON z.podcastid = lp.id
+                      WHERE z.userid = :userid";
+        $contextlist->add_from_sql($sqlzones, [
             'contextmodule' => CONTEXT_MODULE,
             'modname' => 'learnplugpodcasts',
             'userid' => $userid,
@@ -201,6 +224,28 @@ class provider implements
                 $exportdata->likes = $exportlikes;
             }
 
+            $zonerows = $DB->get_records_sql(
+                "SELECT z.*, e.title
+                   FROM {learnplugpodcasts_zone} z
+                   JOIN {learnplugpodcasts_eps} e ON e.id = z.episodeid
+                  WHERE z.podcastid = :podcastid AND z.userid = :userid
+               ORDER BY z.episodeid ASC, z.bucketstart ASC",
+                ['podcastid' => $cm->instance, 'userid' => $contextlist->get_user()->id]
+            );
+
+            if ($zonerows) {
+                $exportzones = [];
+                foreach ($zonerows as $row) {
+                    $exportzones[] = [
+                        'episode' => $row->title,
+                        'bucketstart' => (int)$row->bucketstart,
+                        'listenedsecs' => (float)$row->listenedsecs,
+                        'timemodified' => transform::datetime($row->timemodified),
+                    ];
+                }
+                $exportdata->listeningzones = $exportzones;
+            }
+
             if (!empty((array)$exportdata)) {
                 writer::with_context($context)->export_data([get_string('pluginname', 'learnplugpodcasts')], $exportdata);
             }
@@ -226,6 +271,7 @@ class provider implements
 
         $DB->delete_records('learnplugpodcasts_prog', ['podcastid' => $cm->instance]);
         $DB->delete_records('learnplugpodcasts_like', ['podcastid' => $cm->instance]);
+        $DB->delete_records('learnplugpodcasts_zone', ['podcastid' => $cm->instance]);
         $DB->set_field('learnplugpodcasts', 'owneruserid', 0, ['id' => $cm->instance]);
     }
 
@@ -248,6 +294,7 @@ class provider implements
             }
             $DB->delete_records('learnplugpodcasts_prog', ['podcastid' => $cm->instance, 'userid' => $userid]);
             $DB->delete_records('learnplugpodcasts_like', ['podcastid' => $cm->instance, 'userid' => $userid]);
+            $DB->delete_records('learnplugpodcasts_zone', ['podcastid' => $cm->instance, 'userid' => $userid]);
             $DB->set_field(
                 'learnplugpodcasts',
                 'owneruserid',
@@ -291,6 +338,14 @@ class provider implements
                       WHERE cm.id = :cmid
                         AND m.name = :modname";
         $userlist->add_from_sql('userid', $sqllikes, ['cmid' => $context->instanceid, 'modname' => 'learnplugpodcasts']);
+
+        $sqlzones = "SELECT z.userid
+                       FROM {learnplugpodcasts_zone} z
+                       JOIN {course_modules} cm ON cm.instance = z.podcastid
+                       JOIN {modules} m ON m.id = cm.module
+                      WHERE cm.id = :cmid
+                        AND m.name = :modname";
+        $userlist->add_from_sql('userid', $sqlzones, ['cmid' => $context->instanceid, 'modname' => 'learnplugpodcasts']);
     }
 
     /**
@@ -315,6 +370,7 @@ class provider implements
         $params['podcastid'] = $cm->instance;
         $DB->delete_records_select('learnplugpodcasts_prog', "podcastid = :podcastid AND userid {$in}", $params);
         $DB->delete_records_select('learnplugpodcasts_like', "podcastid = :podcastid AND userid {$in}", $params);
+        $DB->delete_records_select('learnplugpodcasts_zone', "podcastid = :podcastid AND userid {$in}", $params);
         $DB->execute(
             "UPDATE {learnplugpodcasts}
                 SET owneruserid = 0

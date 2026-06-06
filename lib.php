@@ -504,6 +504,7 @@ function learnplugpodcasts_reset_userdata($data): array {
         $instances = $DB->get_records('learnplugpodcasts', ['course' => $data->courseid]);
         foreach ($instances as $instance) {
             $DB->delete_records('learnplugpodcasts_prog', ['podcastid' => $instance->id]);
+            $DB->delete_records('learnplugpodcasts_zone', ['podcastid' => $instance->id]);
             $DB->delete_records('learnplugpodcasts_like', ['podcastid' => $instance->id]);
             learnplugpodcasts_update_grades($instance);
         }

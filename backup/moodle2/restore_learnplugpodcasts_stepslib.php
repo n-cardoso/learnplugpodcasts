@@ -38,6 +38,10 @@ class restore_learnplugpodcasts_activity_structure_step extends restore_activity
                 'learnplugpodcasts_progress',
                 '/activity/learnplugpodcasts/progressrows/progress'
             );
+            $paths[] = new restore_path_element(
+                'learnplugpodcasts_zone',
+                '/activity/learnplugpodcasts/zonerows/zone'
+            );
         }
 
         return $this->prepare_activity_structure($paths);
@@ -93,6 +97,25 @@ class restore_learnplugpodcasts_activity_structure_step extends restore_activity
             return;
         }
         $DB->insert_record('learnplugpodcasts_prog', $data);
+    }
+
+    /**
+     * Process heatmap zone.
+     *
+     * @param array $data
+     * @return void
+     */
+    protected function process_learnplugpodcasts_zone(array $data): void {
+        global $DB;
+
+        $data = (object)$data;
+        $data->podcastid = $this->get_new_parentid('learnplugpodcasts');
+        $data->episodeid = $this->get_mappingid('learnplugpodcasts_eps', $data->episodeid);
+        $data->userid = $this->get_mappingid('user', $data->userid);
+        if (empty($data->userid) || empty($data->episodeid)) {
+            return;
+        }
+        $DB->insert_record('learnplugpodcasts_zone', $data);
     }
 
     /**

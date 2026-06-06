@@ -25,6 +25,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             states.set(player, {
                 lastPos: Number(player.currentTime || 0),
                 pending: 0,
+                pendingRanges: [],
                 duration: Number(player.duration || 0),
                 seeking: false,
                 timer: null
@@ -41,7 +42,9 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
         }
 
         const delta = Math.max(0, Math.min(state.pending, 35));
+        const playedrangesjson = JSON.stringify(state.pendingRanges);
         state.pending = 0;
+        state.pendingRanges = [];
 
         Ajax.call([{
             methodname: 'mod_learnplugpodcasts_save_progress',
@@ -51,7 +54,8 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                 positionsecs: Math.floor(player.currentTime || 0),
                 advanceddelta: delta,
                 durationsecs: Math.floor(player.duration || state.duration || 0),
-                playstate: player.paused ? 'paused' : 'playing'
+                playstate: player.paused ? 'paused' : 'playing',
+                playedrangesjson: playedrangesjson
             }
         }])[0].then((response) => {
             const label = player.closest('.lp-player-wrap')?.querySelector('[data-region="lp-progress-label"]');
@@ -60,6 +64,22 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             }
             return response;
         }).catch(Notification.exception);
+    };
+
+    const appendRange = (ranges, start, end) => {
+        if (end <= start) {
+            return;
+        }
+
+        const normalizedStart = Math.max(0, start);
+        const normalizedEnd = Math.max(normalizedStart, end);
+        const last = ranges[ranges.length - 1];
+        if (last && normalizedStart <= (last[1] + 0.25)) {
+            last[1] = Math.max(last[1], normalizedEnd);
+            return;
+        }
+
+        ranges.push([normalizedStart, normalizedEnd]);
     };
 
     const bindPlayer = (config, player) => {
@@ -89,6 +109,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             const advance = current - state.lastPos;
             if (advance > 0 && advance < 3.5) {
                 state.pending += advance;
+                appendRange(state.pendingRanges, state.lastPos, current);
             }
             state.lastPos = current;
         });

@@ -294,5 +294,32 @@ function xmldb_learnplugpodcasts_upgrade($oldversion): bool {
         upgrade_mod_savepoint(true, 2026050507, 'learnplugpodcasts');
     }
 
+    if ($oldversion < 2026060601) {
+        $dbman = $DB->get_manager();
+        $table = new xmldb_table('learnplugpodcasts_zone');
+
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('podcastid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('episodeid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('bucketstart', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('listenedsecs', XMLDB_TYPE_NUMBER, '10, 2', null, XMLDB_NOTNULL, null, '0.00');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_key('podcast_fk', XMLDB_KEY_FOREIGN, ['podcastid'], 'learnplugpodcasts', ['id']);
+            $table->add_key('episode_fk', XMLDB_KEY_FOREIGN, ['episodeid'], 'learnplugpodcasts_eps', ['id']);
+            $table->add_key('user_fk', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+
+            $table->add_index('episode_user_bucket_uix', XMLDB_INDEX_UNIQUE, ['episodeid', 'userid', 'bucketstart']);
+
+            $dbman->create_table($table);
+        }
+
+        upgrade_mod_savepoint(true, 2026060601, 'learnplugpodcasts');
+    }
+
     return true;
 }

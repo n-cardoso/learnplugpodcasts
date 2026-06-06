@@ -37,6 +37,17 @@ class analytics_service {
         global $DB;
 
         $podcastid = (int)$podcast->id;
+        $episodes = $DB->get_records(
+            'learnplugpodcasts_eps',
+            ['podcastid' => $podcastid],
+            '',
+            'id, title, durationsecs, draftstatus, publishtime, sortorder'
+        );
+        $episodesbyid = [];
+        foreach ($episodes as $episode) {
+            $episodesbyid[(int)$episode->id] = $episode;
+        }
+
         $episodestats = $DB->get_records_sql(
             "SELECT e.id,
                     e.title,
@@ -59,11 +70,13 @@ class analytics_service {
                   GROUP BY episodeid
           ) l
                  ON l.episodeid = e.id
-              WHERE e.podcastid = :podcastid
+               WHERE e.podcastid = :podcastid
            GROUP BY e.id, e.title, e.draftstatus, e.durationsecs, e.publishtime, e.sortorder, l.likes
            ORDER BY e.sortorder ASC, e.publishtime DESC, e.id DESC",
             ['podcastid' => $podcastid]
         );
+        $episodezones = $this->build_episode_zone_rows($podcastid, $episodesbyid);
+        $learnerzones = $this->build_learner_zone_rows($podcastid, $episodesbyid);
 
         $episodecount = count($episodestats);
         $publishedcount = 0;
@@ -157,7 +170,78 @@ class analytics_service {
             ],
             'rows' => $reportrows,
             'hasrows' => !empty($reportrows),
+            'episodezones' => $episodezones,
+            'hasepisodezones' => !empty($episodezones),
+            'learnerzones' => $learnerzones,
+            'haslearnerzones' => !empty($learnerzones),
         ];
+    }
+
+    /**
+     * Build aggregated hottest zones per episode.
+     *
+     * @param int $podcastid
+     * @param array $episodesbyid
+     * @return array
+     */
+    private function build_episode_zone_rows(int $podcastid, array $episodesbyid): array {
+        $rows = [];
+        $zones = (new \mod_learnplugpodcasts\local\repository\progress_repository())->get_top_episode_zones($podcastid, 3);
+        foreach ($zones as $episodeid => $episodezones) {
+            $episode = $episodesbyid[$episodeid] ?? null;
+            if (!$episode) {
+                continue;
+            }
+
+            $zonelabels = [];
+            foreach ($episodezones as $zone) {
+                $zonelabels[] = [
+                    'timerange' => $this->format_zone_range(
+                        (int)$zone->bucketstart,
+                        (int)$episode->durationsecs
+                    ),
+                    'listened' => duration::format_hms((int)round((float)$zone->listenedsecs)),
+                    'listeners' => (int)$zone->listeners,
+                ];
+            }
+
+            $rows[] = [
+                'title' => format_string((string)$episode->title),
+                'zones' => $zonelabels,
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Build strongest zone per learner and episode.
+     *
+     * @param int $podcastid
+     * @param array $episodesbyid
+     * @return array
+     */
+    private function build_learner_zone_rows(int $podcastid, array $episodesbyid): array {
+        $rows = [];
+        $zones = (new \mod_learnplugpodcasts\local\repository\progress_repository())->get_top_learner_zones($podcastid);
+        foreach ($zones as $zone) {
+            $episode = $episodesbyid[(int)$zone->episodeid] ?? null;
+            if (!$episode) {
+                continue;
+            }
+
+            $rows[] = [
+                'learner' => fullname($zone),
+                'title' => format_string((string)$episode->title),
+                'timerange' => $this->format_zone_range(
+                    (int)$zone->bucketstart,
+                    (int)$episode->durationsecs
+                ),
+                'listened' => duration::format_hms((int)round((float)$zone->listenedsecs)),
+            ];
+        }
+
+        return $rows;
     }
 
     /**
@@ -199,5 +283,21 @@ class analytics_service {
      */
     private function format_percent(float $value): string {
         return format_float(round($value, 1), 1) . '%';
+    }
+
+    /**
+     * Format one heatmap bucket as a human-readable range.
+     *
+     * @param int $bucketstart
+     * @param int $durationsecs
+     * @return string
+     */
+    private function format_zone_range(int $bucketstart, int $durationsecs): string {
+        $bucketend = $bucketstart + \mod_learnplugpodcasts\local\repository\progress_repository::ZONE_BUCKET_SIZE;
+        if ($durationsecs > 0) {
+            $bucketend = min($bucketend, $durationsecs);
+        }
+
+        return duration::format_hms($bucketstart) . ' - ' . duration::format_hms($bucketend);
     }
 }

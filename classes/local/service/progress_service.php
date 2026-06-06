@@ -59,7 +59,8 @@ class progress_service {
         int $positionsecs,
         float $advanceddelta,
         int $durationsecs,
-        string $state
+        string $state,
+        array $playedranges = []
     ): \stdClass {
         $positionsecs = max(0, $positionsecs);
         $durationsecs = max(0, $durationsecs);
@@ -101,6 +102,13 @@ class progress_service {
         ];
 
         $saved = $this->progressrepo->upsert($record);
+        $this->record_heatmap_ranges(
+            (int)$podcast->id,
+            (int)$episode->id,
+            $userid,
+            $playedranges,
+            $effectiveduration
+        );
 
         $event = progress_updated::create([
             'context' => $context,
@@ -123,6 +131,70 @@ class progress_service {
         learnplugpodcasts_update_grades($podcast, $userid);
 
         return $saved;
+    }
+
+    /**
+     * Validate and persist listened ranges into fixed heatmap buckets.
+     *
+     * @param int $podcastid
+     * @param int $episodeid
+     * @param int $userid
+     * @param array $playedranges
+     * @param int $durationsecs
+     * @return void
+     */
+    private function record_heatmap_ranges(
+        int $podcastid,
+        int $episodeid,
+        int $userid,
+        array $playedranges,
+        int $durationsecs
+    ): void {
+        if (empty($playedranges)) {
+            return;
+        }
+
+        $bucketsize = progress_repository::ZONE_BUCKET_SIZE;
+        $maxduration = max(0, $durationsecs);
+        foreach ($playedranges as $range) {
+            if (!is_array($range) || count($range) !== 2) {
+                continue;
+            }
+
+            $start = isset($range[0]) ? (float)$range[0] : 0.0;
+            $end = isset($range[1]) ? (float)$range[1] : 0.0;
+            if ($maxduration > 0) {
+                $start = min($start, (float)$maxduration);
+                $end = min($end, (float)$maxduration);
+            }
+            $start = max(0.0, $start);
+            $end = max(0.0, $end);
+
+            if ($end <= $start) {
+                continue;
+            }
+
+            $rangeend = $end - 0.0001;
+            $firstbucket = (int)floor($start / $bucketsize) * $bucketsize;
+            $lastbucket = (int)floor($rangeend / $bucketsize) * $bucketsize;
+
+            for ($bucketstart = $firstbucket; $bucketstart <= $lastbucket; $bucketstart += $bucketsize) {
+                $bucketend = $bucketstart + $bucketsize;
+                $overlapstart = max($start, (float)$bucketstart);
+                $overlapend = min($end, (float)$bucketend);
+                $overlap = round($overlapend - $overlapstart, 2);
+                if ($overlap <= 0) {
+                    continue;
+                }
+                $this->progressrepo->add_zone_listening(
+                    $podcastid,
+                    $episodeid,
+                    $userid,
+                    $bucketstart,
+                    $overlap
+                );
+            }
+        }
     }
 
     /**

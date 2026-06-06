@@ -19,6 +19,16 @@ Example context (json):
 "totallistened": "01:12:03",
 "duration": "00:12:18",
 "lastactivity": "2026-05-04 11:20"
+}],
+"episodezones": [{
+"title": "Episode 1",
+"zones": [{"timerange":"00:00:30 - 00:00:45","listened":"00:12:00","listeners":6}]
+}],
+"learnerzones": [{
+"learner": "Alex Example",
+"title": "Episode 1",
+"timerange": "00:00:30 - 00:00:45",
+"listened": "00:03:15"
 }]
 }
 }
@@ -28,6 +38,14 @@ Example context (json):
 <h2>{{#str}}analyticstitle, mod_learnplugpodcasts{{/str}}</h2>
 </div>
 <p class="lp-note">{{#str}}analyticssubtitle, mod_learnplugpodcasts{{/str}}</p>
+{{#canviewreports}}
+<div class="lp-manage-actions">
+<a class="btn btn-secondary" href="{{reporturl}}">{{#str}}viewreports, mod_learnplugpodcasts{{/str}}</a>
+{{#canmanageprogress}}
+<a class="btn btn-outline-danger" href="{{resetallprogressurl}}">{{#str}}resetprogressall, mod_learnplugpodcasts{{/str}}</a>
+{{/canmanageprogress}}
+</div>
+{{/canviewreports}}
 <div class="lp-analytics-cards">
 {{#analytics.cards}}
 <article class="lp-analytics-card">
@@ -77,4 +95,62 @@ Example context (json):
 {{^hasanalyticsrows}}
 <div class="lp-empty">{{#str}}noprogress, mod_learnplugpodcasts{{/str}}</div>
 {{/hasanalyticsrows}}
+{{#analytics.hasepisodezones}}
+<div class="lp-analytics-table-wrap">
+<div class="lp-manage-header">
+<h3>{{#str}}analytics_topzones, mod_learnplugpodcasts{{/str}}</h3>
+</div>
+<p class="lp-note">{{#str}}analytics_topzones_sub, mod_learnplugpodcasts{{/str}}</p>
+<table class="lp-analytics-table">
+<thead>
+<tr>
+<th>{{#str}}analytics_episode, mod_learnplugpodcasts{{/str}}</th>
+<th>{{#str}}analytics_zone, mod_learnplugpodcasts{{/str}}</th>
+<th>{{#str}}analytics_listenedtime, mod_learnplugpodcasts{{/str}}</th>
+<th>{{#str}}analytics_listeners, mod_learnplugpodcasts{{/str}}</th>
+</tr>
+</thead>
+<tbody>
+{{#analytics.episodezones}}
+{{#zones}}
+<tr>
+<td>{{title}}</td>
+<td>{{timerange}}</td>
+<td>{{listened}}</td>
+<td>{{listeners}}</td>
+</tr>
+{{/zones}}
+{{/analytics.episodezones}}
+</tbody>
+</table>
+</div>
+{{/analytics.hasepisodezones}}
+{{#analytics.haslearnerzones}}
+<div class="lp-analytics-table-wrap">
+<div class="lp-manage-header">
+<h3>{{#str}}analytics_learnerhotspots, mod_learnplugpodcasts{{/str}}</h3>
+</div>
+<p class="lp-note">{{#str}}analytics_learnerhotspots_sub, mod_learnplugpodcasts{{/str}}</p>
+<table class="lp-analytics-table">
+<thead>
+<tr>
+<th>{{#str}}analytics_learner, mod_learnplugpodcasts{{/str}}</th>
+<th>{{#str}}analytics_episode, mod_learnplugpodcasts{{/str}}</th>
+<th>{{#str}}analytics_zone, mod_learnplugpodcasts{{/str}}</th>
+<th>{{#str}}analytics_listenedtime, mod_learnplugpodcasts{{/str}}</th>
+</tr>
+</thead>
+<tbody>
+{{#analytics.learnerzones}}
+<tr>
+<td>{{learner}}</td>
+<td>{{title}}</td>
+<td>{{timerange}}</td>
+<td>{{listened}}</td>
+</tr>
+{{/analytics.learnerzones}}
+</tbody>
+</table>
+</div>
+{{/analytics.haslearnerzones}}
 </section>

@@ -52,6 +52,10 @@ class backup_learnplugpodcasts_activity_structure_step extends backup_activity_s
             'podcastid', 'episodeid', 'userid', 'lastpositionsecs', 'listenedsecs', 'listenedpercent', 'completed',
             'lastplaystate', 'timemodified', 'timecreated',
         ]);
+        $zonerows = new backup_nested_element('zonerows');
+        $zone = new backup_nested_element('zone', ['id'], [
+            'podcastid', 'episodeid', 'userid', 'bucketstart', 'listenedsecs', 'timemodified', 'timecreated',
+        ]);
 
         $learnplugpodcasts->add_child($episodes);
         $episodes->add_child($episode);
@@ -59,6 +63,8 @@ class backup_learnplugpodcasts_activity_structure_step extends backup_activity_s
         if ($userinfo) {
             $learnplugpodcasts->add_child($progressrows);
             $progressrows->add_child($progress);
+            $learnplugpodcasts->add_child($zonerows);
+            $zonerows->add_child($zone);
         }
 
         $learnplugpodcasts->set_source_table('learnplugpodcasts', ['id' => backup::VAR_ACTIVITYID]);
@@ -67,6 +73,8 @@ class backup_learnplugpodcasts_activity_structure_step extends backup_activity_s
         if ($userinfo) {
             $progress->set_source_table('learnplugpodcasts_prog', ['podcastid' => backup::VAR_PARENTID]);
             $progress->annotate_ids('user', 'userid');
+            $zone->set_source_table('learnplugpodcasts_zone', ['podcastid' => backup::VAR_PARENTID]);
+            $zone->annotate_ids('user', 'userid');
         }
 
         $learnplugpodcasts->annotate_files('mod_learnplugpodcasts', 'intro', null);

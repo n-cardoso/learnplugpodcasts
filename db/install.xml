@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/learnplugpodcasts/db" VERSION="2026050409" COMMENT="XMLDB file for mod_learnplugpodcasts"
+<XMLDB PATH="mod/learnplugpodcasts/db" VERSION="2026060601" COMMENT="XMLDB file for mod_learnplugpodcasts"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
   <TABLES>
@@ -152,6 +152,28 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="episode_user_uix" UNIQUE="true" FIELDS="episodeid, userid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="learnplugpodcasts_zone" COMMENT="Learner listening heatmap buckets">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="podcastid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="episodeid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="bucketstart" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="listenedsecs" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="true" DEFAULT="0.00"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="podcast_fk" TYPE="foreign" FIELDS="podcastid" REFTABLE="learnplugpodcasts" REFFIELDS="id"/>
+        <KEY NAME="episode_fk" TYPE="foreign" FIELDS="episodeid" REFTABLE="learnplugpodcasts_eps" REFFIELDS="id"/>
+        <KEY NAME="user_fk" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="episode_user_bucket_uix" UNIQUE="true" FIELDS="episodeid, userid, bucketstart"/>
       </INDEXES>
     </TABLE>
   </TABLES>

@@ -25,9 +25,13 @@
 require_once(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
 
+use mod_learnplugpodcasts\local\service\analytics_service;
 use mod_learnplugpodcasts\local\repository\progress_repository;
 
 $id = required_param('id', PARAM_INT);
+$action = optional_param('action', '', PARAM_ALPHA);
+$userid = optional_param('userid', 0, PARAM_INT);
+$confirm = optional_param('confirm', 0, PARAM_BOOL);
 
 $cm = get_coursemodule_from_id('learnplugpodcasts', $id, 0, false, MUST_EXIST);
 $course = get_course($cm->course);
@@ -43,10 +47,90 @@ $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_pagelayout('incourse');
 
 $progressrepo = new progress_repository();
+$analyticsservice = new analytics_service();
 $canviewreports = has_capability('mod/learnplugpodcasts:viewreports', $context);
+$canmanageprogress = $canviewreports && has_capability('mod/learnplugpodcasts:manageepisodes', $context);
+$baseurl = new moodle_url('/mod/learnplugpodcasts/grade.php', ['id' => $cm->id]);
 
 if (learnplugpodcasts_has_grading_enabled($podcast)) {
     learnplugpodcasts_update_grades($podcast);
+}
+
+$clear_grades = static function(array $userids) use ($podcast): void {
+    if (!learnplugpodcasts_has_grading_enabled($podcast) || empty($userids)) {
+        return;
+    }
+
+    $grades = [];
+    foreach (array_unique($userids) as $useridtoclear) {
+        $grades[(int)$useridtoclear] = (object)[
+            'userid' => (int)$useridtoclear,
+            'rawgrade' => null,
+        ];
+    }
+    learnplugpodcasts_grade_item_update($podcast, $grades);
+};
+
+if ($action !== '') {
+    require_sesskey();
+
+    if (!$canmanageprogress) {
+        throw new required_capability_exception(
+            $context,
+            'mod/learnplugpodcasts:manageepisodes',
+            'nopermissions',
+            ''
+        );
+    }
+
+    if ($action === 'resetallprogress') {
+        if (!$confirm) {
+            $confirmurl = new moodle_url($baseurl, [
+                'action' => 'resetallprogress',
+                'confirm' => 1,
+                'sesskey' => sesskey(),
+            ]);
+            echo $OUTPUT->header();
+            echo $OUTPUT->heading(get_string('viewreports', 'learnplugpodcasts'));
+            echo $OUTPUT->confirm(
+                get_string('resetprogressconfirmall', 'learnplugpodcasts'),
+                $confirmurl,
+                $baseurl
+            );
+            echo $OUTPUT->footer();
+            exit;
+        }
+
+        $userids = $progressrepo->get_podcast_userids((int)$podcast->id);
+        $progressrepo->reset_podcast_progress((int)$podcast->id);
+        $clear_grades($userids);
+        redirect($baseurl, get_string('resetprogressdoneall', 'learnplugpodcasts'));
+    }
+
+    if ($action === 'resetuserprogress') {
+        $targetuser = core_user::get_user($userid, '*', MUST_EXIST);
+        if (!$confirm) {
+            $confirmurl = new moodle_url($baseurl, [
+                'action' => 'resetuserprogress',
+                'userid' => $userid,
+                'confirm' => 1,
+                'sesskey' => sesskey(),
+            ]);
+            echo $OUTPUT->header();
+            echo $OUTPUT->heading(get_string('viewreports', 'learnplugpodcasts'));
+            echo $OUTPUT->confirm(
+                get_string('resetprogressconfirmuser', 'learnplugpodcasts', fullname($targetuser)),
+                $confirmurl,
+                $baseurl
+            );
+            echo $OUTPUT->footer();
+            exit;
+        }
+
+        $progressrepo->reset_user_progress((int)$podcast->id, $userid);
+        $clear_grades([$userid]);
+        redirect($baseurl, get_string('resetprogressdoneuser', 'learnplugpodcasts', fullname($targetuser)));
+    }
 }
 
 echo $OUTPUT->header();
@@ -57,6 +141,13 @@ if (!learnplugpodcasts_has_grading_enabled($podcast)) {
 }
 
 if ($canviewreports) {
+    $enrolledcount = (int)count_enrolled_users($context, 'mod/learnplugpodcasts:view');
+    $analytics = $analyticsservice->get_report_data($podcast, $enrolledcount);
+    echo $OUTPUT->render_from_template('mod_learnplugpodcasts/analytics', [
+        'analytics' => $analytics,
+        'hasanalyticsrows' => !empty($analytics['hasrows']),
+    ]);
+
     $rows = $progressrepo->report_rows((int)$podcast->id);
     $gradebookgrades = [];
     if ($rows && learnplugpodcasts_has_grading_enabled($podcast)) {
@@ -71,7 +162,15 @@ if ($canviewreports) {
         $item = $gradeinfo->items[0] ?? null;
         if (!empty($item->grades)) {
             foreach ($item->grades as $userid => $grade) {
-                $gradebookgrades[(int)$userid] = is_null($grade->finalgrade) ? null : (float)$grade->finalgrade;
+                $numericgrade = null;
+                if (property_exists($grade, 'finalgrade') && is_numeric($grade->finalgrade)) {
+                    $numericgrade = (float)$grade->finalgrade;
+                } else if (property_exists($grade, 'grade') && is_numeric($grade->grade)) {
+                    $numericgrade = (float)$grade->grade;
+                } else if (property_exists($grade, 'rawgrade') && is_numeric($grade->rawgrade)) {
+                    $numericgrade = (float)$grade->rawgrade;
+                }
+                $gradebookgrades[(int)$userid] = $numericgrade;
             }
         }
     }
@@ -79,6 +178,17 @@ if ($canviewreports) {
     if (!$rows) {
         echo $OUTPUT->notification(get_string('noprogress', 'learnplugpodcasts'), 'info');
     } else {
+        if ($canmanageprogress) {
+            echo $OUTPUT->single_button(
+                new moodle_url($baseurl, [
+                    'action' => 'resetallprogress',
+                    'sesskey' => sesskey(),
+                ]),
+                get_string('resetprogressall', 'learnplugpodcasts'),
+                'get'
+            );
+        }
+
         $table = new html_table();
         $table->head = [
             get_string('user'),
@@ -87,16 +197,31 @@ if ($canviewreports) {
             get_string('lastaccess'),
             get_string('gradeheader', 'learnplugpodcasts'),
         ];
+        if ($canmanageprogress) {
+            $table->head[] = get_string('actions');
+        }
         foreach ($rows as $row) {
             $userid = (int)$row->userid;
             $grade = $gradebookgrades[$userid] ?? null;
-            $table->data[] = [
+            $tablerow = [
                 fullname($row),
                 round((float)$row->avgpercent, 2) . '%',
                 (int)$row->totalsecs,
                 userdate((int)$row->lastactivity),
                 is_null($grade) ? '-' : round($grade, 2),
             ];
+            if ($canmanageprogress) {
+                $tablerow[] = $OUTPUT->single_button(
+                    new moodle_url($baseurl, [
+                        'action' => 'resetuserprogress',
+                        'userid' => $userid,
+                        'sesskey' => sesskey(),
+                    ]),
+                    get_string('resetprogressuser', 'learnplugpodcasts'),
+                    'get'
+                );
+            }
+            $table->data[] = $tablerow;
         }
         echo html_writer::table($table);
     }

@@ -44,6 +44,7 @@ class save_progress extends external_api {
             'advanceddelta' => new external_value(PARAM_FLOAT, 'Advancing playback delta in seconds', VALUE_OPTIONAL, 0),
             'durationsecs' => new external_value(PARAM_INT, 'Episode duration in seconds', VALUE_OPTIONAL, 0),
             'playstate' => new external_value(PARAM_ALPHA, 'Playback state', VALUE_OPTIONAL, 'playing'),
+            'playedrangesjson' => new external_value(PARAM_RAW, 'JSON array of listened ranges', VALUE_OPTIONAL, '[]'),
         ]);
     }
 
@@ -56,6 +57,7 @@ class save_progress extends external_api {
      * @param float $advanceddelta
      * @param int $durationsecs
      * @param string $playstate
+     * @param string $playedrangesjson
      * @return array
      */
     public static function execute(
@@ -64,7 +66,8 @@ class save_progress extends external_api {
         int $positionsecs = 0,
         float $advanceddelta = 0,
         int $durationsecs = 0,
-        string $playstate = 'playing'
+        string $playstate = 'playing',
+        string $playedrangesjson = '[]'
     ): array {
         global $DB, $USER;
 
@@ -80,6 +83,7 @@ class save_progress extends external_api {
             'advanceddelta' => $advanceddelta,
             'durationsecs' => $durationsecs,
             'playstate' => $playstate,
+            'playedrangesjson' => $playedrangesjson,
         ]);
 
         if ((int)$params['episodeid'] <= 0) {
@@ -89,6 +93,8 @@ class save_progress extends external_api {
                 'completed' => 0,
             ];
         }
+
+        $playedranges = self::decode_played_ranges((string)$params['playedrangesjson']);
 
         $episodeservice = new episode_service();
         $episode = $episodeservice->get_by_id($params['episodeid']);
@@ -128,7 +134,8 @@ class save_progress extends external_api {
             $params['positionsecs'],
             $params['advanceddelta'],
             $params['durationsecs'],
-            $params['playstate']
+            $params['playstate'],
+            $playedranges
         );
 
         return [
@@ -149,5 +156,41 @@ class save_progress extends external_api {
             'lastpositionsecs' => new external_value(PARAM_INT, 'Saved position'),
             'completed' => new external_value(PARAM_INT, 'Completed flag 0/1'),
         ]);
+    }
+
+    /**
+     * Decode and validate played ranges.
+     *
+     * @param string $playedrangesjson
+     * @return array
+     */
+    private static function decode_played_ranges(string $playedrangesjson): array {
+        $playedrangesjson = trim($playedrangesjson);
+        if ($playedrangesjson === '') {
+            return [];
+        }
+
+        $decoded = json_decode($playedrangesjson, true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        $ranges = [];
+        foreach ($decoded as $range) {
+            if (!is_array($range) || count($range) !== 2) {
+                continue;
+            }
+
+            $start = isset($range[0]) ? (float)$range[0] : 0.0;
+            $end = isset($range[1]) ? (float)$range[1] : 0.0;
+            $start = max(0.0, min($start, 86400.0));
+            $end = max(0.0, min($end, 86400.0));
+            if ($end <= $start) {
+                continue;
+            }
+            $ranges[] = [$start, $end];
+        }
+
+        return $ranges;
     }
 }
