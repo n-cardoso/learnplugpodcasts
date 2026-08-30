@@ -105,9 +105,9 @@ The plugin stores learner listening progress:
 
 Progress is exportable and deletable through Moodle privacy APIs.
 
-## Limitations (v1)
+## New CSV Export Screen
 
-- Analytics dashboard beyond summary reports is not included.
+- Teachers and administrators can now choose focused CSV reports or download a normalized export containing all analytics data.
 
 ## Developer notes
 
