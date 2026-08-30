@@ -141,6 +141,12 @@ if (!learnplugpodcasts_has_grading_enabled($podcast)) {
 }
 
 if ($canviewreports) {
+    echo $OUTPUT->single_button(
+        new moodle_url('/mod/learnplugpodcasts/export.php', ['id' => $cm->id]),
+        get_string('exportanalyticscsv', 'learnplugpodcasts'),
+        'get'
+    );
+
     $enrolledcount = (int)count_enrolled_users($context, 'mod/learnplugpodcasts:view');
     $analytics = $analyticsservice->get_report_data($podcast, $enrolledcount);
     echo $OUTPUT->render_from_template('mod_learnplugpodcasts/analytics', [

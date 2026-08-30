@@ -378,6 +378,7 @@ $renderable = new podcast_view($podcast, array_values($episodes), [
     'rssurl' => $rssurl,
     'publicurl' => $publicurl,
     'reporturl' => (new moodle_url('/mod/learnplugpodcasts/grade.php', ['id' => $cm->id]))->out(false),
+    'csvexporturl' => (new moodle_url('/mod/learnplugpodcasts/export.php', ['id' => $cm->id]))->out(false),
     'resetallprogressurl' => (new moodle_url('/mod/learnplugpodcasts/grade.php', [
         'id' => $cm->id,
         'action' => 'resetallprogress',

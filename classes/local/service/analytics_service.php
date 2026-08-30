@@ -115,22 +115,40 @@ class analytics_service {
                 'statuslabel' => $this->status_label((string)$row->draftstatus),
                 'listeners' => $listeners,
                 'listenerengagement' => $this->format_percent($listenerengagement),
+                'listenerengagementvalue' => round($listenerengagement, 2),
                 'avglistenedpercent' => $this->format_percent($avgpercent),
+                'avglistenedvalue' => round($avgpercent, 2),
                 'completionrate' => $this->format_percent($completionrate),
+                'completionratevalue' => round($completionrate, 2),
                 'completions' => $completions,
                 'likes' => $likes,
                 'duration' => duration::format_hms((int)$row->durationsecs),
+                'durationsecs' => (int)$row->durationsecs,
                 'totallistened' => duration::format_hms($totalsecs),
+                'totallistenedsecs' => $totalsecs,
                 'lastactivity' => !empty($row->lastactivity) ? userdate((int)$row->lastactivity) : '-',
+                'lastactivitytimestamp' => (int)$row->lastactivity,
                 'publishtime' => !empty($row->publishtime) ? userdate((int)$row->publishtime) : '-',
             ];
         }
 
         $avglistenedoverall = $overallprogressrows > 0 ? ($weightedpercentsum / $overallprogressrows) : 0;
-        $activityengagement = $enrolledcount > 0 ? ($this->count_active_learners($podcastid) / $enrolledcount) * 100 : 0;
+        $activelearners = $this->count_active_learners($podcastid);
+        $activityengagement = $enrolledcount > 0 ? ($activelearners / $enrolledcount) * 100 : 0;
         $avgcompletionoverall = $overallprogressrows > 0 ? ($overallcompletions / $overallprogressrows) * 100 : 0;
 
         return [
+            'summary' => [
+                'enrolledlearners' => $enrolledcount,
+                'activelearners' => $activelearners,
+                'activityengagement' => round($activityengagement, 2),
+                'avglistened' => round($avglistenedoverall, 2),
+                'completionrate' => round($avgcompletionoverall, 2),
+                'totallisteningsecs' => $overalltotalsecs,
+                'publishedepisodes' => $publishedcount,
+                'totalepisodes' => $episodecount,
+                'totallikes' => $overalllikes,
+            ],
             'cards' => [
                 [
                     'label' => get_string('analyticscard_enrolledlearners', 'learnplugpodcasts'),
@@ -195,12 +213,21 @@ class analytics_service {
 
             $zonelabels = [];
             foreach ($episodezones as $zone) {
+                $bucketstart = (int)$zone->bucketstart;
+                $bucketend = $bucketstart
+                    + \mod_learnplugpodcasts\local\repository\progress_repository::ZONE_BUCKET_SIZE;
+                if ((int)$episode->durationsecs > 0) {
+                    $bucketend = min($bucketend, (int)$episode->durationsecs);
+                }
                 $zonelabels[] = [
                     'timerange' => $this->format_zone_range(
-                        (int)$zone->bucketstart,
+                        $bucketstart,
                         (int)$episode->durationsecs
                     ),
                     'listened' => duration::format_hms((int)round((float)$zone->listenedsecs)),
+                    'bucketstart' => $bucketstart,
+                    'bucketend' => $bucketend,
+                    'listenedsecs' => round((float)$zone->listenedsecs, 2),
                     'listeners' => (int)$zone->listeners,
                 ];
             }
@@ -230,14 +257,23 @@ class analytics_service {
                 continue;
             }
 
+            $bucketstart = (int)$zone->bucketstart;
+            $bucketend = $bucketstart
+                + \mod_learnplugpodcasts\local\repository\progress_repository::ZONE_BUCKET_SIZE;
+            if ((int)$episode->durationsecs > 0) {
+                $bucketend = min($bucketend, (int)$episode->durationsecs);
+            }
             $rows[] = [
                 'learner' => fullname($zone),
                 'title' => format_string((string)$episode->title),
                 'timerange' => $this->format_zone_range(
-                    (int)$zone->bucketstart,
+                    $bucketstart,
                     (int)$episode->durationsecs
                 ),
                 'listened' => duration::format_hms((int)round((float)$zone->listenedsecs)),
+                'bucketstart' => $bucketstart,
+                'bucketend' => $bucketend,
+                'listenedsecs' => round((float)$zone->listenedsecs, 2),
             ];
         }
 

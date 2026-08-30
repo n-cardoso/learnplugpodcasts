@@ -156,6 +156,7 @@ class podcast_view implements \renderable, \templatable {
             'analytics' => $this->options['analytics'] ?? [],
             'hasanalyticsrows' => !empty($this->options['analytics']['hasrows']),
             'reporturl' => $this->options['reporturl'] ?? '',
+            'csvexporturl' => $this->options['csvexporturl'] ?? '',
             'resetallprogressurl' => $this->options['resetallprogressurl'] ?? '',
             'hasepisodes' => !empty($episodedata),
             'sesskey' => sesskey(),

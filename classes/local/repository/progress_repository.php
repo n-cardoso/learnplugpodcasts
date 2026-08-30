@@ -111,6 +111,45 @@ class progress_repository {
     }
 
     /**
+     * Return detailed learner progress for every tracked episode.
+     *
+     * @param int $podcastid
+     * @return array
+     */
+    public function report_episode_rows(int $podcastid): array {
+        global $DB;
+
+        $sql = "SELECT p.id,
+                       p.userid,
+                       u.firstname,
+                       u.lastnamephonetic,
+                       u.firstnamephonetic,
+                       u.lastname,
+                       u.middlename,
+                       u.alternatename,
+                       e.title AS episodetitle,
+                       p.listenedpercent,
+                       p.listenedsecs,
+                       p.lastpositionsecs,
+                       p.completed,
+                       p.timemodified,
+                       CASE WHEN l.id IS NULL THEN 0 ELSE 1 END AS liked
+                  FROM {learnplugpodcasts_prog} p
+                  JOIN {user} u
+                    ON u.id = p.userid
+                  JOIN {learnplugpodcasts_eps} e
+                    ON e.id = p.episodeid
+             LEFT JOIN {learnplugpodcasts_like} l
+                    ON l.podcastid = p.podcastid
+                   AND l.episodeid = p.episodeid
+                   AND l.userid = p.userid
+                 WHERE p.podcastid = :podcastid
+              ORDER BY u.lastname ASC, u.firstname ASC, e.sortorder ASC, e.id ASC";
+
+        return $DB->get_records_sql($sql, ['podcastid' => $podcastid]);
+    }
+
+    /**
      * Return learner IDs with progress records in one podcast.
      *
      * @param int $podcastid
@@ -247,12 +286,17 @@ class progress_repository {
     public function get_top_learner_zones(int $podcastid): array {
         global $DB;
 
-        $sql = "SELECT z.userid,
+        $sql = "SELECT z.id,
+                       z.userid,
                        z.episodeid,
                        z.bucketstart,
                        z.listenedsecs,
                        u.firstname,
-                       u.lastname
+                       u.lastnamephonetic,
+                       u.firstnamephonetic,
+                       u.lastname,
+                       u.middlename,
+                       u.alternatename
                   FROM {learnplugpodcasts_zone} z
                   JOIN {user} u
                     ON u.id = z.userid

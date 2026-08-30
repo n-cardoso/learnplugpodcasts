@@ -7,6 +7,7 @@ LearnPlug Podcasts analytics block.
 Example context (json):
 {
 "hasanalyticsrows": true,
+"csvexporturl": "https://example.invalid/export.php?id=1",
 "analytics": {
 "cards": [{"label":"Published episodes","value":"4","sub":"Out of total"}],
 "rows": [{
@@ -41,6 +42,7 @@ Example context (json):
 {{#canviewreports}}
 <div class="lp-manage-actions">
 <a class="btn btn-secondary" href="{{reporturl}}">{{#str}}viewreports, mod_learnplugpodcasts{{/str}}</a>
+<a class="btn btn-secondary" href="{{csvexporturl}}">{{#str}}exportanalyticscsv, mod_learnplugpodcasts{{/str}}</a>
 {{#canmanageprogress}}
 <a class="btn btn-outline-danger" href="{{resetallprogressurl}}">{{#str}}resetprogressall, mod_learnplugpodcasts{{/str}}</a>
 {{/canmanageprogress}}
